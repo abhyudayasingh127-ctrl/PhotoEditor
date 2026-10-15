@@ -37,10 +37,14 @@ export function buildCssFilter(
     parts.push(`opacity(${(1 - adj.fade / 200).toFixed(3)})`);
   }
 
+  // Blur (CSS blur is in px)
+  if (adj.blur > 0) {
+    parts.push(`blur(${(adj.blur * 0.6).toFixed(2)}px)`);
+  }
+
   // Selected filter blended by intensity
   const filter = FILTERS.find((f) => f.id === filterId);
   if (filter && filter.css && filterId !== 'original' && filterIntensity > 0) {
-    // Simple approach: apply full filter CSS, intensity handled by layering later if needed
     parts.push(filter.css);
   }
 
@@ -69,10 +73,10 @@ export async function exportImage(
   // Apply crop if present
   let sx = 0, sy = 0, sw = srcW, sh = srcH;
   if (crop && crop.width > 0 && crop.height > 0) {
-    sx = crop.x;
-    sy = crop.y;
-    sw = crop.width;
-    sh = crop.height;
+    sx = Math.max(0, crop.x);
+    sy = Math.max(0, crop.y);
+    sw = Math.min(crop.width, srcW - sx);
+    sh = Math.min(crop.height, srcH - sy);
   }
 
   // Handle rotation dimensions
@@ -107,6 +111,20 @@ export async function exportImage(
     gradient.addColorStop(1, `rgba(0,0,0,${strength * 0.85})`);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, outW, outH);
+  }
+
+  // Simple film grain (noise overlay)
+  if (adj.grain > 0) {
+    const strength = adj.grain / 100;
+    const imageData = ctx.getImageData(0, 0, outW, outH);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const noise = (Math.random() - 0.5) * 60 * strength;
+      data[i] = Math.min(255, Math.max(0, data[i] + noise));
+      data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise));
+      data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise));
+    }
+    ctx.putImageData(imageData, 0, 0);
   }
 
   return new Promise((resolve, reject) => {
