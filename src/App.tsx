@@ -10,6 +10,8 @@ import {
   ToolId,
   HistoryEntry,
   CropState,
+  TextLayer,
+  ShapeLayer,
 } from './types';
 import { useHistory } from './hooks/useHistory';
 import { exportImage } from './utils/imageProcessing';
@@ -29,11 +31,15 @@ function App() {
   const [exportOpen, setExportOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
-  // Resize state (separate from history for simplicity)
+  // Resize state
   const [resizeWidth, setResizeWidth] = useState(0);
   const [resizeHeight, setResizeHeight] = useState(0);
   const [resizeLock, setResizeLock] = useState(true);
   const aspectRef = useRef(1);
+
+  // Currently editing text/shape
+  const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
+  const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
 
   const initialHistory: HistoryEntry = {
     adjustments: { ...DEFAULT_ADJUSTMENTS },
@@ -43,6 +49,8 @@ function App() {
     flipH: false,
     flipV: false,
     crop: null,
+    texts: [],
+    shapes: [],
   };
 
   const {
@@ -57,7 +65,7 @@ function App() {
     redo,
   } = useHistory(initialHistory);
 
-  const { adjustments, filterId, filterIntensity, rotation, flipH, flipV, crop } = present;
+  const { adjustments, filterId, filterIntensity, rotation, flipH, flipV, crop, texts = [], shapes = [] } = present;
 
   // Load image
   const loadFile = useCallback((file: File) => {
@@ -89,9 +97,13 @@ function App() {
         flipH: false,
         flipV: false,
         crop: null,
+        texts: [],
+        shapes: [],
       };
       replacePresent(reset);
       setIsDirty(false);
+      setSelectedTextId(null);
+      setSelectedShapeId(null);
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
@@ -155,27 +167,18 @@ function App() {
     let newCrop: CropState;
 
     if (aspect === 'free') {
-      newCrop = {
-        x: 0,
-        y: 0,
-        width: naturalSize.w,
-        height: naturalSize.h,
-        aspect: 'free',
-      };
+      newCrop = { x: 0, y: 0, width: naturalSize.w, height: naturalSize.h, aspect: 'free' };
     } else {
       const [aw, ah] = aspect.split(':').map(Number);
       const targetRatio = aw / ah;
       let w = naturalSize.w;
       let h = w / targetRatio;
-
       if (h > naturalSize.h) {
         h = naturalSize.h;
         w = h * targetRatio;
       }
-
       const x = (naturalSize.w - w) / 2;
       const y = (naturalSize.h - h) / 2;
-
       newCrop = { x, y, width: w, height: h, aspect };
     }
 
@@ -183,11 +186,7 @@ function App() {
     setIsDirty(true);
   };
 
-  const handleApplyCrop = () => {
-    // Crop is already in history – just keep it
-    setIsDirty(true);
-  };
-
+  const handleApplyCrop = () => setIsDirty(true);
   const handleClearCrop = () => {
     push({ ...present, crop: null });
     setIsDirty(true);
@@ -196,26 +195,81 @@ function App() {
   // ---- Resize helpers ----
   const handleResizeWidthChange = (w: number) => {
     setResizeWidth(w);
-    if (resizeLock && aspectRef.current) {
-      setResizeHeight(Math.round(w / aspectRef.current));
-    }
+    if (resizeLock && aspectRef.current) setResizeHeight(Math.round(w / aspectRef.current));
   };
-
   const handleResizeHeightChange = (h: number) => {
     setResizeHeight(h);
-    if (resizeLock && aspectRef.current) {
-      setResizeWidth(Math.round(h * aspectRef.current));
-    }
+    if (resizeLock && aspectRef.current) setResizeWidth(Math.round(h * aspectRef.current));
   };
-
-  const handleResizeLockToggle = () => {
-    setResizeLock((v) => !v);
-  };
-
+  const handleResizeLockToggle = () => setResizeLock((v) => !v);
   const handleApplyResize = () => {
-    // For now we store the desired output size in naturalSize for export dialog
-    // A full pixel resize would require re-rendering the source – kept simple for Phase 1
     setNaturalSize({ w: resizeWidth, h: resizeHeight });
+    setIsDirty(true);
+  };
+
+  // ---- Text helpers ----
+  const handleAddText = () => {
+    const id = `text-${Date.now()}`;
+    const newText: TextLayer = {
+      id,
+      text: 'Double-click to edit',
+      x: 50,
+      y: 50,
+      fontSize: 48,
+      fontFamily: 'Inter, system-ui, sans-serif',
+      color: '#ffffff',
+      strokeColor: '#000000',
+      strokeWidth: 0,
+      align: 'center',
+      bold: false,
+      italic: false,
+    };
+    push({ ...present, texts: [...(present.texts || []), newText] });
+    setSelectedTextId(id);
+    setIsDirty(true);
+  };
+
+  const handleUpdateText = (id: string, updates: Partial<TextLayer>) => {
+    const next = (present.texts || []).map((t) => (t.id === id ? { ...t, ...updates } : t));
+    push({ ...present, texts: next });
+    setIsDirty(true);
+  };
+
+  const handleDeleteText = (id: string) => {
+    push({ ...present, texts: (present.texts || []).filter((t) => t.id !== id) });
+    if (selectedTextId === id) setSelectedTextId(null);
+    setIsDirty(true);
+  };
+
+  // ---- Shape helpers ----
+  const handleAddShape = (type: ShapeLayer['type']) => {
+    const id = `shape-${Date.now()}`;
+    const newShape: ShapeLayer = {
+      id,
+      type,
+      x: 30,
+      y: 30,
+      width: 40,
+      height: 30,
+      color: '#ffffff',
+      strokeColor: '#000000',
+      strokeWidth: 3,
+      filled: type !== 'line' && type !== 'arrow',
+    };
+    push({ ...present, shapes: [...(present.shapes || []), newShape] });
+    setSelectedShapeId(id);
+    setIsDirty(true);
+  };
+
+  const handleUpdateShape = (id: string, updates: Partial<ShapeLayer>) => {
+    const next = (present.shapes || []).map((s) => (s.id === id ? { ...s, ...updates } : s));
+    push({ ...present, shapes: next });
+    setIsDirty(true);
+  };
+
+  const handleDeleteShape = (id: string) => {
+    push({ ...present, shapes: (present.shapes || []).filter((s) => s.id !== id) });
+    if (selectedShapeId === id) setSelectedShapeId(null);
     setIsDirty(true);
   };
 
@@ -241,8 +295,12 @@ function App() {
           flipH: false,
           flipV: false,
           crop: null,
+          texts: [],
+          shapes: [],
         });
         setIsDirty(false);
+        setSelectedTextId(null);
+        setSelectedShapeId(null);
       }
     } else if (tool === 'compare') {
       setShowOriginal((v) => !v);
@@ -256,17 +314,10 @@ function App() {
       setActiveSection('edit');
       setRightTab('adjust');
     } else if (tool === 'crop') {
-      // Initialize a free crop if none exists
       if (!present.crop && naturalSize.w > 0) {
         push({
           ...present,
-          crop: {
-            x: 0,
-            y: 0,
-            width: naturalSize.w,
-            height: naturalSize.h,
-            aspect: 'free',
-          },
+          crop: { x: 0, y: 0, width: naturalSize.w, height: naturalSize.h, aspect: 'free' },
         });
       }
     }
@@ -284,11 +335,7 @@ function App() {
 
     try {
       const mime =
-        format === 'png'
-          ? 'image/png'
-          : format === 'webp'
-          ? 'image/webp'
-          : 'image/jpeg';
+        format === 'png' ? 'image/png' : format === 'webp' ? 'image/webp' : 'image/jpeg';
 
       const blob = await exportImage(
         imgRef.current,
@@ -404,6 +451,19 @@ function App() {
           onResizeHeightChange={handleResizeHeightChange}
           onResizeLockToggle={handleResizeLockToggle}
           onApplyResize={handleApplyResize}
+          // Phase 2
+          texts={texts}
+          shapes={shapes}
+          selectedTextId={selectedTextId}
+          selectedShapeId={selectedShapeId}
+          onSelectText={setSelectedTextId}
+          onSelectShape={setSelectedShapeId}
+          onAddText={handleAddText}
+          onUpdateText={handleUpdateText}
+          onDeleteText={handleDeleteText}
+          onAddShape={handleAddShape}
+          onUpdateShape={handleUpdateShape}
+          onDeleteShape={handleDeleteShape}
         />
       </div>
 
