@@ -1,4 +1,4 @@
-import { Adjustments, FILTERS } from '../types';
+import { Adjustments, FILTERS, TextLayer, ShapeLayer } from '../types';
 
 /** Build CSS filter string from adjustments + selected filter */
 export function buildCssFilter(
@@ -8,7 +8,6 @@ export function buildCssFilter(
 ): string {
   const parts: string[] = [];
 
-  // Base adjustments
   const brightness = 1 + adj.brightness / 100 + adj.exposure / 120;
   const contrast = 1 + adj.contrast / 100;
   const saturation = 1 + adj.saturation / 100;
@@ -20,29 +19,24 @@ export function buildCssFilter(
 
   if (hue !== 0) parts.push(`hue-rotate(${hue}deg)`);
 
-  // Temperature approximation (warm/cool)
   if (adj.temperature > 0) {
     parts.push(`sepia(${(adj.temperature / 200).toFixed(3)})`);
   } else if (adj.temperature < 0) {
     parts.push(`hue-rotate(${(adj.temperature / 4).toFixed(1)}deg)`);
   }
 
-  // Tint
   if (adj.tint !== 0) {
     parts.push(`hue-rotate(${(adj.tint / 5).toFixed(1)}deg)`);
   }
 
-  // Fade
   if (adj.fade > 0) {
     parts.push(`opacity(${(1 - adj.fade / 200).toFixed(3)})`);
   }
 
-  // Blur (CSS blur is in px)
   if (adj.blur > 0) {
     parts.push(`blur(${(adj.blur * 0.6).toFixed(2)}px)`);
   }
 
-  // Selected filter blended by intensity
   const filter = FILTERS.find((f) => f.id === filterId);
   if (filter && filter.css && filterId !== 'original' && filterIntensity > 0) {
     parts.push(filter.css);
@@ -51,7 +45,73 @@ export function buildCssFilter(
   return parts.join(' ');
 }
 
-/** Apply adjustments + filter to a canvas and return a blob for export */
+/** Draw shapes onto canvas (percentages relative to canvas size) */
+function drawShapes(ctx: CanvasRenderingContext2D, shapes: ShapeLayer[], w: number, h: number) {
+  for (const s of shapes) {
+    const x = (s.x / 100) * w;
+    const y = (s.y / 100) * h;
+    const sw = (s.width / 100) * w;
+    const sh = (s.height / 100) * h;
+
+    ctx.save();
+    ctx.lineWidth = s.strokeWidth;
+    ctx.strokeStyle = s.strokeColor;
+    ctx.fillStyle = s.color;
+
+    if (s.type === 'rect') {
+      if (s.filled) ctx.fillRect(x, y, sw, sh);
+      if (s.strokeWidth > 0) ctx.strokeRect(x, y, sw, sh);
+    } else if (s.type === 'circle') {
+      const rx = sw / 2;
+      const ry = sh / 2;
+      ctx.beginPath();
+      ctx.ellipse(x + rx, y + ry, rx, ry, 0, 0, Math.PI * 2);
+      if (s.filled) ctx.fill();
+      if (s.strokeWidth > 0) ctx.stroke();
+    } else if (s.type === 'line' || s.type === 'arrow') {
+      ctx.beginPath();
+      ctx.moveTo(x, y + sh / 2);
+      ctx.lineTo(x + sw, y + sh / 2);
+      ctx.stroke();
+
+      if (s.type === 'arrow') {
+        const head = Math.min(12, sw * 0.15);
+        ctx.beginPath();
+        ctx.moveTo(x + sw, y + sh / 2);
+        ctx.lineTo(x + sw - head, y + sh / 2 - head / 2);
+        ctx.lineTo(x + sw - head, y + sh / 2 + head / 2);
+        ctx.closePath();
+        ctx.fillStyle = s.strokeColor;
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+}
+
+/** Draw text layers onto canvas */
+function drawTexts(ctx: CanvasRenderingContext2D, texts: TextLayer[], w: number, h: number) {
+  for (const t of texts) {
+    const x = (t.x / 100) * w;
+    const y = (t.y / 100) * h;
+
+    ctx.save();
+    ctx.font = `${t.italic ? 'italic ' : ''}${t.bold ? 'bold ' : ''}${t.fontSize}px ${t.fontFamily}`;
+    ctx.textAlign = t.align;
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = t.color;
+
+    if (t.strokeWidth > 0) {
+      ctx.strokeStyle = t.strokeColor;
+      ctx.lineWidth = t.strokeWidth;
+      ctx.strokeText(t.text, x, y);
+    }
+    ctx.fillText(t.text, x, y);
+    ctx.restore();
+  }
+}
+
+/** Apply adjustments + filter + texts/shapes to a canvas and return a blob */
 export async function exportImage(
   source: HTMLImageElement | HTMLCanvasElement,
   adj: Adjustments,
@@ -62,7 +122,9 @@ export async function exportImage(
   flipV: boolean,
   format: 'image/jpeg' | 'image/png' | 'image/webp',
   quality: number,
-  crop?: { x: number; y: number; width: number; height: number } | null
+  crop?: { x: number; y: number; width: number; height: number } | null,
+  texts: TextLayer[] = [],
+  shapes: ShapeLayer[] = []
 ): Promise<Blob> {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
@@ -70,7 +132,6 @@ export async function exportImage(
   let srcW = source instanceof HTMLImageElement ? source.naturalWidth : source.width;
   let srcH = source instanceof HTMLImageElement ? source.naturalHeight : source.height;
 
-  // Apply crop if present
   let sx = 0, sy = 0, sw = srcW, sh = srcH;
   if (crop && crop.width > 0 && crop.height > 0) {
     sx = Math.max(0, crop.x);
@@ -79,7 +140,6 @@ export async function exportImage(
     sh = Math.min(crop.height, srcH - sy);
   }
 
-  // Handle rotation dimensions
   const rad = (rotation * Math.PI) / 180;
   const cos = Math.abs(Math.cos(rad));
   const sin = Math.abs(Math.sin(rad));
@@ -93,14 +153,11 @@ export async function exportImage(
   ctx.translate(outW / 2, outH / 2);
   ctx.rotate(rad);
   ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
-
-  // Apply CSS-like filters via canvas filter property
   ctx.filter = buildCssFilter(adj, filterId, filterIntensity);
-
   ctx.drawImage(source, sx, sy, sw, sh, -sw / 2, -sh / 2, sw, sh);
   ctx.restore();
 
-  // Simple vignette if needed
+  // Vignette
   if (adj.vignette > 0) {
     const strength = adj.vignette / 100;
     const gradient = ctx.createRadialGradient(
@@ -113,7 +170,7 @@ export async function exportImage(
     ctx.fillRect(0, 0, outW, outH);
   }
 
-  // Simple film grain (noise overlay)
+  // Film grain
   if (adj.grain > 0) {
     const strength = adj.grain / 100;
     const imageData = ctx.getImageData(0, 0, outW, outH);
@@ -126,6 +183,10 @@ export async function exportImage(
     }
     ctx.putImageData(imageData, 0, 0);
   }
+
+  // Draw shapes then texts (on top)
+  drawShapes(ctx, shapes, outW, outH);
+  drawTexts(ctx, texts, outW, outH);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(
