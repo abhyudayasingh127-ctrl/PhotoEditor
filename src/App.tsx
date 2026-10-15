@@ -287,12 +287,12 @@ function App() {
   }, [undo, redo, imageSrc]);
 
   return (
-    <div className="h-full flex flex-col bg-surface-900 text-text-primary font-sans">
+    <div className="h-full flex flex-col bg-surface-900 text-text-primary font-sans pb-16 md:pb-0">
       <TopToolbar canUndo={canUndo} canRedo={canRedo} hasImage={!!imageSrc} isDirty={isDirty}
         onUndo={undo} onRedo={redo} onExport={() => setExportOpen(true)}
         activeSection={activeSection} onSectionChange={handleSectionChange} />
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         <ToolSidebar activeTool={activeTool} onToolChange={handleToolChange} onUploadClick={handleUploadClick} hasImage={!!imageSrc} />
 
         <ImageWorkspace
@@ -310,24 +310,49 @@ function App() {
           shapes={shapes}
         />
 
-        <RightPanel
-          activeTab={rightTab} onTabChange={setRightTab}
-          adjustments={adjustments} filterId={filterId} filterIntensity={filterIntensity}
-          onAdjustmentChange={handleAdjustmentChange} onAdjustmentEnd={handleAdjustmentEnd}
-          onFilterChange={handleFilterChange} onFilterIntensityChange={handleFilterIntensity}
-          onResetAll={handleResetAll} imageSrc={imageSrc}
-          activeTool={activeTool} crop={crop}
-          naturalWidth={naturalSize.w} naturalHeight={naturalSize.h}
-          onCropAspectChange={handleCropAspectChange} onApplyCrop={handleApplyCrop} onClearCrop={handleClearCrop}
-          resizeWidth={resizeWidth} resizeHeight={resizeHeight} resizeLock={resizeLock}
-          onResizeWidthChange={handleResizeWidthChange} onResizeHeightChange={handleResizeHeightChange}
-          onResizeLockToggle={handleResizeLockToggle} onApplyResize={handleApplyResize}
-          texts={texts} shapes={shapes}
-          selectedTextId={selectedTextId} selectedShapeId={selectedShapeId}
-          onSelectText={setSelectedTextId} onSelectShape={setSelectedShapeId}
-          onAddText={handleAddText} onUpdateText={handleUpdateText} onDeleteText={handleDeleteText}
-          onAddShape={handleAddShape} onUpdateShape={handleUpdateShape} onDeleteShape={handleDeleteShape}
-        />
+        {/* Right panel – on mobile becomes a bottom sheet style (full width, limited height) */}
+        <div className="hidden md:contents">
+          <RightPanel
+            activeTab={rightTab} onTabChange={setRightTab}
+            adjustments={adjustments} filterId={filterId} filterIntensity={filterIntensity}
+            onAdjustmentChange={handleAdjustmentChange} onAdjustmentEnd={handleAdjustmentEnd}
+            onFilterChange={handleFilterChange} onFilterIntensityChange={handleFilterIntensity}
+            onResetAll={handleResetAll} imageSrc={imageSrc}
+            activeTool={activeTool} crop={crop}
+            naturalWidth={naturalSize.w} naturalHeight={naturalSize.h}
+            onCropAspectChange={handleCropAspectChange} onApplyCrop={handleApplyCrop} onClearCrop={handleClearCrop}
+            resizeWidth={resizeWidth} resizeHeight={resizeHeight} resizeLock={resizeLock}
+            onResizeWidthChange={handleResizeWidthChange} onResizeHeightChange={handleResizeHeightChange}
+            onResizeLockToggle={handleResizeLockToggle} onApplyResize={handleApplyResize}
+            texts={texts} shapes={shapes}
+            selectedTextId={selectedTextId} selectedShapeId={selectedShapeId}
+            onSelectText={setSelectedTextId} onSelectShape={setSelectedShapeId}
+            onAddText={handleAddText} onUpdateText={handleUpdateText} onDeleteText={handleDeleteText}
+            onAddShape={handleAddShape} onUpdateShape={handleUpdateShape} onDeleteShape={handleDeleteShape}
+          />
+        </div>
+
+        {/* Mobile right panel – full width overlay from bottom when needed */}
+        <div className="md:hidden fixed left-0 right-0 bottom-16 z-30 max-h-[50vh] overflow-hidden rounded-t-xl border-t border-surface-500 shadow-2xl">
+          <RightPanel
+            activeTab={rightTab} onTabChange={setRightTab}
+            adjustments={adjustments} filterId={filterId} filterIntensity={filterIntensity}
+            onAdjustmentChange={handleAdjustmentChange} onAdjustmentEnd={handleAdjustmentEnd}
+            onFilterChange={handleFilterChange} onFilterIntensityChange={handleFilterIntensity}
+            onResetAll={handleResetAll} imageSrc={imageSrc}
+            activeTool={activeTool} crop={crop}
+            naturalWidth={naturalSize.w} naturalHeight={naturalSize.h}
+            onCropAspectChange={handleCropAspectChange} onApplyCrop={handleApplyCrop} onClearCrop={handleClearCrop}
+            resizeWidth={resizeWidth} resizeHeight={resizeHeight} resizeLock={resizeLock}
+            onResizeWidthChange={handleResizeWidthChange} onResizeHeightChange={handleResizeHeightChange}
+            onResizeLockToggle={handleResizeLockToggle} onApplyResize={handleApplyResize}
+            texts={texts} shapes={shapes}
+            selectedTextId={selectedTextId} selectedShapeId={selectedShapeId}
+            onSelectText={setSelectedTextId} onSelectShape={setSelectedShapeId}
+            onAddText={handleAddText} onUpdateText={handleUpdateText} onDeleteText={handleDeleteText}
+            onAddShape={handleAddShape} onUpdateShape={handleUpdateShape} onDeleteShape={handleDeleteShape}
+          />
+        </div>
       </div>
 
       <input ref={fileInputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/webp" className="hidden" onChange={handleFileChange} />
