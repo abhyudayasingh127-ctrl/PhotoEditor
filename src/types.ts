@@ -24,6 +24,34 @@ export interface CropState {
   aspect: string; // 'free' | '1:1' | '4:3' | '3:2' | '16:9' | '9:16' | '3:4'
 }
 
+export interface TextLayer {
+  id: string;
+  text: string;
+  x: number;          // percentage 0-100
+  y: number;          // percentage 0-100
+  fontSize: number;
+  fontFamily: string;
+  color: string;
+  strokeColor: string;
+  strokeWidth: number;
+  align: 'left' | 'center' | 'right';
+  bold: boolean;
+  italic: boolean;
+}
+
+export interface ShapeLayer {
+  id: string;
+  type: 'rect' | 'circle' | 'line' | 'arrow';
+  x: number;          // percentage
+  y: number;
+  width: number;      // percentage
+  height: number;
+  color: string;
+  strokeColor: string;
+  strokeWidth: number;
+  filled: boolean;
+}
+
 export interface ImageState {
   src: string | null;
   originalSrc: string | null;
@@ -42,6 +70,8 @@ export interface HistoryEntry {
   flipH: boolean;
   flipV: boolean;
   crop: CropState | null;
+  texts: TextLayer[];
+  shapes: ShapeLayer[];
 }
 
 export type ToolId =
@@ -90,6 +120,14 @@ export const ASPECT_RATIOS = [
   { id: '9:16', label: '9:16' },
   { id: '3:4', label: '3:4' },
 ] as const;
+
+export const FONT_FAMILIES = [
+  'Inter, system-ui, sans-serif',
+  'Georgia, serif',
+  'Courier New, monospace',
+  'Arial, sans-serif',
+  'Impact, sans-serif',
+];
 
 export const FILTERS = [
   { id: 'original', name: 'Original', css: '' },
