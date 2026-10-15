@@ -10,47 +10,31 @@ https://abhyudayasingh127-ctrl.github.io/hotelwaliweb/
 ### Core
 - Professional dark charcoal UI
 - Real-time adjustments (Brightness, Contrast, Saturation, Exposure, Highlights, Shadows, Temperature, Tint, Hue, Fade, Vignette, Sharpness)
-- 18 Filter presets with live thumbnails from your image
+- 18 Filter presets with live thumbnails
 - Rotate & Flip
 - Undo / Redo + keyboard shortcuts
 - Before / After comparison
 - Zoom & Pan
 - Export as JPEG / PNG / WebP
 - Drag & drop upload
-- 100% local processing (privacy first)
+- 100% local processing
 
-### Phase 1 (New)
+### Phase 1
 - **Crop** – aspect ratio presets (Free, 1:1, 4:3, 3:2, 16:9, 9:16, 3:4)
-- **Resize** – width / height with optional aspect lock
+- **Resize** – width / height with aspect lock
 - **Blur** – live soft blur
-- **Film Grain** – realistic noise applied on export
+- **Film Grain** – realistic noise on export
 
-## Quick Start (Local)
+### Phase 2
+- **Text tool** – add multiple text layers, font, size, color, stroke, bold/italic
+- **Shapes** – rectangle, circle, line, arrow with fill & stroke controls
+
+## Quick Start
 
 ```bash
 npm install
 npm run dev
 ```
-
-Open http://localhost:5173
-
-## Deploy to GitHub Pages
-
-1. Go to your repo → **Settings → Pages**
-2. Under **Source**, select **GitHub Actions**
-3. The workflow will automatically build and deploy every time you push to `main`
-4. Wait 1–2 minutes, then open:  
-   https://abhyudayasingh127-ctrl.github.io/hotelwaliweb/
-
-You can also trigger it manually from the **Actions** tab.
-
-## Build for production
-
-```bash
-npm run build
-```
-
-Output goes to the `dist/` folder.
 
 ## Keyboard Shortcuts
 
@@ -60,15 +44,11 @@ Output goes to the `dist/` folder.
 | `Ctrl/Cmd + Shift + Z` | Redo |
 | `Ctrl/Cmd + O` | Open image |
 | `Ctrl/Cmd + S` | Export |
-| `Esc` | Close dialog / exit compare |
+| `Esc` | Close dialog |
 
 ## Tech Stack
 
-- React 18 + TypeScript
-- Vite
-- Tailwind CSS
-- Lucide icons
-- HTML Canvas
+React 18 + TypeScript · Vite · Tailwind CSS · Lucide · HTML Canvas
 
 ## License
 
