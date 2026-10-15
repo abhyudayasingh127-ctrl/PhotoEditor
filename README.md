@@ -20,14 +20,19 @@ https://abhyudayasingh127-ctrl.github.io/hotelwaliweb/
 - 100% local processing
 
 ### Phase 1
-- **Crop** – aspect ratio presets (Free, 1:1, 4:3, 3:2, 16:9, 9:16, 3:4)
+- **Crop** – aspect ratio presets
 - **Resize** – width / height with aspect lock
 - **Blur** – live soft blur
 - **Film Grain** – realistic noise on export
 
 ### Phase 2
-- **Text tool** – add multiple text layers, font, size, color, stroke, bold/italic
-- **Shapes** – rectangle, circle, line, arrow with fill & stroke controls
+- **Text tool** – multiple layers, font, size, color, stroke, bold/italic
+- **Shapes** – rectangle, circle, line, arrow with fill & stroke
+- Live preview + export of text & shapes
+
+### Phase 3
+- **Curves** – Shadows / Midtones / Highlights controls
+- **HSL / Color** – Hue Shift, Saturation, Lightness
 
 ## Quick Start
 
