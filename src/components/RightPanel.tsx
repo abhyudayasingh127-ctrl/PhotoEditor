@@ -27,7 +27,6 @@ interface Props {
   onResizeHeightChange: (h: number) => void;
   onResizeLockToggle: () => void;
   onApplyResize: () => void;
-  // Phase 2
   texts: TextLayer[];
   shapes: ShapeLayer[];
   selectedTextId: string | null;
@@ -58,7 +57,6 @@ export default function RightPanel(props: Props) {
   const selectedText = texts.find((t) => t.id === selectedTextId) || null;
   const selectedShape = shapes.find((s) => s.id === selectedShapeId) || null;
 
-  // ---- Crop panel ----
   if (activeTool === 'crop') {
     return (
       <aside className="w-[320px] shrink-0 bg-surface-800 border-l border-surface-500 flex flex-col overflow-hidden">
@@ -90,7 +88,6 @@ export default function RightPanel(props: Props) {
     );
   }
 
-  // ---- Resize panel ----
   if (activeTool === 'resize') {
     return (
       <aside className="w-[320px] shrink-0 bg-surface-800 border-l border-surface-500 flex flex-col overflow-hidden">
@@ -119,7 +116,6 @@ export default function RightPanel(props: Props) {
     );
   }
 
-  // ---- Text panel ----
   if (activeTool === 'text') {
     return (
       <aside className="w-[320px] shrink-0 bg-surface-800 border-l border-surface-500 flex flex-col overflow-hidden">
@@ -128,18 +124,13 @@ export default function RightPanel(props: Props) {
           <button onClick={onAddText} className="text-[12px] text-accent hover:underline">+ Add Text</button>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {texts.length === 0 && (
-            <p className="text-[12px] text-text-muted">Click “+ Add Text” to place text on the image.</p>
-          )}
-
+          {texts.length === 0 && <p className="text-[12px] text-text-muted">Click “+ Add Text” to place text on the image.</p>}
           {texts.map((t) => (
-            <div key={t.id}
-              onClick={() => onSelectText(t.id)}
+            <div key={t.id} onClick={() => onSelectText(t.id)}
               className={`p-2 rounded-md border cursor-pointer text-[12px] truncate ${
                 selectedTextId === t.id ? 'border-accent bg-accent/10' : 'border-surface-500 hover:border-surface-400'
               }`}>{t.text || '(empty)'}</div>
           ))}
-
           {selectedText && (
             <div className="space-y-3 pt-2 border-t border-surface-500">
               <div>
@@ -148,7 +139,6 @@ export default function RightPanel(props: Props) {
                   onChange={(e) => onUpdateText(selectedText.id, { text: e.target.value })}
                   className="w-full bg-surface-700 border border-surface-500 rounded-md px-3 py-2 text-[13px] outline-none focus:border-accent resize-none" />
               </div>
-
               <div>
                 <label className="text-[12px] text-text-secondary block mb-1">Font</label>
                 <select value={selectedText.fontFamily}
@@ -157,35 +147,26 @@ export default function RightPanel(props: Props) {
                   {FONT_FAMILIES.map((f) => <option key={f} value={f}>{f.split(',')[0]}</option>)}
                 </select>
               </div>
-
               <SliderControl label="Size" value={selectedText.fontSize} min={12} max={200}
                 onChange={(v) => onUpdateText(selectedText.id, { fontSize: v })} onChangeEnd={() => {}} />
-
               <div className="flex gap-2">
                 <div className="flex-1">
                   <label className="text-[12px] text-text-secondary block mb-1">Color</label>
-                  <input type="color" value={selectedText.color}
-                    onChange={(e) => onUpdateText(selectedText.id, { color: e.target.value })}
-                    className="w-full h-9 rounded cursor-pointer" />
+                  <input type="color" value={selectedText.color} onChange={(e) => onUpdateText(selectedText.id, { color: e.target.value })} className="w-full h-9 rounded cursor-pointer" />
                 </div>
                 <div className="flex-1">
                   <label className="text-[12px] text-text-secondary block mb-1">Stroke</label>
-                  <input type="color" value={selectedText.strokeColor}
-                    onChange={(e) => onUpdateText(selectedText.id, { strokeColor: e.target.value })}
-                    className="w-full h-9 rounded cursor-pointer" />
+                  <input type="color" value={selectedText.strokeColor} onChange={(e) => onUpdateText(selectedText.id, { strokeColor: e.target.value })} className="w-full h-9 rounded cursor-pointer" />
                 </div>
               </div>
-
               <SliderControl label="Stroke Width" value={selectedText.strokeWidth} min={0} max={20}
                 onChange={(v) => onUpdateText(selectedText.id, { strokeWidth: v })} onChangeEnd={() => {}} />
-
               <div className="flex gap-2">
                 <button onClick={() => onUpdateText(selectedText.id, { bold: !selectedText.bold })}
                   className={`flex-1 py-1.5 rounded text-[12px] border ${selectedText.bold ? 'bg-accent/20 border-accent text-accent' : 'border-surface-500'}`}>Bold</button>
                 <button onClick={() => onUpdateText(selectedText.id, { italic: !selectedText.italic })}
                   className={`flex-1 py-1.5 rounded text-[12px] border ${selectedText.italic ? 'bg-accent/20 border-accent text-accent' : 'border-surface-500'}`}>Italic</button>
               </div>
-
               <button onClick={() => onDeleteText(selectedText.id)}
                 className="w-full py-2 rounded-md border border-red-500/50 text-red-400 text-[13px] hover:bg-red-500/10">Delete Text</button>
             </div>
@@ -195,7 +176,6 @@ export default function RightPanel(props: Props) {
     );
   }
 
-  // ---- Shapes panel ----
   if (activeTool === 'shapes') {
     return (
       <aside className="w-[320px] shrink-0 bg-surface-800 border-l border-surface-500 flex flex-col overflow-hidden">
@@ -204,49 +184,32 @@ export default function RightPanel(props: Props) {
           <div className="grid grid-cols-2 gap-2">
             {(['rect', 'circle', 'line', 'arrow'] as const).map((type) => (
               <button key={type} onClick={() => onAddShape(type)}
-                className="py-2 rounded-md border border-surface-500 text-[12px] capitalize hover:border-accent hover:text-accent">
-                + {type}
-              </button>
+                className="py-2 rounded-md border border-surface-500 text-[12px] capitalize hover:border-accent hover:text-accent">+ {type}</button>
             ))}
           </div>
-
-          {shapes.length > 0 && (
-            <div className="space-y-1">
-              {shapes.map((s) => (
-                <div key={s.id} onClick={() => onSelectShape(s.id)}
-                  className={`p-2 rounded-md border cursor-pointer text-[12px] capitalize ${
-                    selectedShapeId === s.id ? 'border-accent bg-accent/10' : 'border-surface-500'
-                  }`}>{s.type}</div>
-              ))}
-            </div>
-          )}
-
+          {shapes.map((s) => (
+            <div key={s.id} onClick={() => onSelectShape(s.id)}
+              className={`p-2 rounded-md border cursor-pointer text-[12px] capitalize ${
+                selectedShapeId === s.id ? 'border-accent bg-accent/10' : 'border-surface-500'
+              }`}>{s.type}</div>
+          ))}
           {selectedShape && (
             <div className="space-y-3 pt-2 border-t border-surface-500">
               <div className="flex gap-2">
                 <div className="flex-1">
                   <label className="text-[12px] text-text-secondary block mb-1">Fill</label>
-                  <input type="color" value={selectedShape.color}
-                    onChange={(e) => onUpdateShape(selectedShape.id, { color: e.target.value })}
-                    className="w-full h-9 rounded cursor-pointer" />
+                  <input type="color" value={selectedShape.color} onChange={(e) => onUpdateShape(selectedShape.id, { color: e.target.value })} className="w-full h-9 rounded cursor-pointer" />
                 </div>
                 <div className="flex-1">
                   <label className="text-[12px] text-text-secondary block mb-1">Stroke</label>
-                  <input type="color" value={selectedShape.strokeColor}
-                    onChange={(e) => onUpdateShape(selectedShape.id, { strokeColor: e.target.value })}
-                    className="w-full h-9 rounded cursor-pointer" />
+                  <input type="color" value={selectedShape.strokeColor} onChange={(e) => onUpdateShape(selectedShape.id, { strokeColor: e.target.value })} className="w-full h-9 rounded cursor-pointer" />
                 </div>
               </div>
-
               <SliderControl label="Stroke Width" value={selectedShape.strokeWidth} min={0} max={30}
                 onChange={(v) => onUpdateShape(selectedShape.id, { strokeWidth: v })} onChangeEnd={() => {}} />
-
               <label className="flex items-center gap-2 text-[13px] text-text-secondary cursor-pointer">
-                <input type="checkbox" checked={selectedShape.filled}
-                  onChange={(e) => onUpdateShape(selectedShape.id, { filled: e.target.checked })} className="rounded" />
-                Filled
+                <input type="checkbox" checked={selectedShape.filled} onChange={(e) => onUpdateShape(selectedShape.id, { filled: e.target.checked })} className="rounded" /> Filled
               </label>
-
               <button onClick={() => onDeleteShape(selectedShape.id)}
                 className="w-full py-2 rounded-md border border-red-500/50 text-red-400 text-[13px] hover:bg-red-500/10">Delete Shape</button>
             </div>
@@ -278,6 +241,7 @@ export default function RightPanel(props: Props) {
               <h3 className="text-[14px] font-semibold">Adjustments</h3>
               <button onClick={onResetAll} className="text-[12px] text-accent hover:underline">Reset All</button>
             </div>
+
             <SliderControl label="Brightness" value={adjustments.brightness} onChange={(v) => onAdjustmentChange('brightness', v)} onChangeEnd={onAdjustmentEnd} />
             <SliderControl label="Contrast" value={adjustments.contrast} onChange={(v) => onAdjustmentChange('contrast', v)} onChangeEnd={onAdjustmentEnd} />
             <SliderControl label="Saturation" value={adjustments.saturation} onChange={(v) => onAdjustmentChange('saturation', v)} onChangeEnd={onAdjustmentEnd} />
@@ -290,6 +254,28 @@ export default function RightPanel(props: Props) {
             <SliderControl label="Fade" value={adjustments.fade} min={0} max={100} onChange={(v) => onAdjustmentChange('fade', v)} onChangeEnd={onAdjustmentEnd} />
             <SliderControl label="Vignette" value={adjustments.vignette} min={0} max={100} onChange={(v) => onAdjustmentChange('vignette', v)} onChangeEnd={onAdjustmentEnd} />
             <SliderControl label="Sharpness" value={adjustments.sharpness} min={0} max={100} onChange={(v) => onAdjustmentChange('sharpness', v)} onChangeEnd={onAdjustmentEnd} />
+
+            {/* Phase 3 – Curves */}
+            <div className="mt-6 pt-4 border-t border-surface-500">
+              <h4 className="text-[13px] font-semibold mb-3 text-text-secondary">Curves</h4>
+              <SliderControl label="Shadows" value={adjustments.curveShadows || 0} min={-100} max={100}
+                onChange={(v) => onAdjustmentChange('curveShadows', v)} onChangeEnd={onAdjustmentEnd} />
+              <SliderControl label="Midtones" value={adjustments.curveMidtones || 0} min={-100} max={100}
+                onChange={(v) => onAdjustmentChange('curveMidtones', v)} onChangeEnd={onAdjustmentEnd} />
+              <SliderControl label="Highlights" value={adjustments.curveHighlights || 0} min={-100} max={100}
+                onChange={(v) => onAdjustmentChange('curveHighlights', v)} onChangeEnd={onAdjustmentEnd} />
+            </div>
+
+            {/* Phase 3 – HSL */}
+            <div className="mt-6 pt-4 border-t border-surface-500">
+              <h4 className="text-[13px] font-semibold mb-3 text-text-secondary">HSL / Color</h4>
+              <SliderControl label="Hue Shift" value={adjustments.hslHue || 0} min={-180} max={180}
+                onChange={(v) => onAdjustmentChange('hslHue', v)} onChangeEnd={onAdjustmentEnd} />
+              <SliderControl label="Saturation" value={adjustments.hslSat || 0} min={-100} max={100}
+                onChange={(v) => onAdjustmentChange('hslSat', v)} onChangeEnd={onAdjustmentEnd} />
+              <SliderControl label="Lightness" value={adjustments.hslLum || 0} min={-100} max={100}
+                onChange={(v) => onAdjustmentChange('hslLum', v)} onChangeEnd={onAdjustmentEnd} />
+            </div>
           </div>
         )}
 
