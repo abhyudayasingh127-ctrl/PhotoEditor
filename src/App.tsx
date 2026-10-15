@@ -31,13 +31,11 @@ function App() {
   const [exportOpen, setExportOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
-  // Resize state
   const [resizeWidth, setResizeWidth] = useState(0);
   const [resizeHeight, setResizeHeight] = useState(0);
   const [resizeLock, setResizeLock] = useState(true);
   const aspectRef = useRef(1);
 
-  // Currently editing text/shape
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
   const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
 
@@ -67,7 +65,6 @@ function App() {
 
   const { adjustments, filterId, filterIntensity, rotation, flipH, flipV, crop, texts = [], shapes = [] } = present;
 
-  // Load image
   const loadFile = useCallback((file: File) => {
     if (!file.type.match(/^image\/(jpeg|jpg|png|webp)$/i)) {
       alert('Unsupported format. Please use JPEG, PNG, or WebP.');
@@ -122,26 +119,16 @@ function App() {
 
   const handleAdjustmentChange = (key: keyof Adjustments, value: number) => {
     startSliding();
-    replacePresent({
-      ...present,
-      adjustments: { ...present.adjustments, [key]: value },
-    });
+    replacePresent({ ...present, adjustments: { ...present.adjustments, [key]: value } });
     setIsDirty(true);
   };
 
   const handleAdjustmentEnd = () => {
-    endSliding({
-      ...present,
-      adjustments: { ...present.adjustments },
-    });
+    endSliding({ ...present, adjustments: { ...present.adjustments } });
   };
 
   const handleFilterChange = (id: string) => {
-    push({
-      ...present,
-      filterId: id,
-      filterIntensity: id === 'original' ? 100 : present.filterIntensity,
-    });
+    push({ ...present, filterId: id, filterIntensity: id === 'original' ? 100 : present.filterIntensity });
     setIsDirty(true);
   };
 
@@ -151,21 +138,13 @@ function App() {
   };
 
   const handleResetAll = () => {
-    push({
-      ...present,
-      adjustments: { ...DEFAULT_ADJUSTMENTS },
-      filterId: 'original',
-      filterIntensity: 100,
-    });
+    push({ ...present, adjustments: { ...DEFAULT_ADJUSTMENTS }, filterId: 'original', filterIntensity: 100 });
     setIsDirty(true);
   };
 
-  // ---- Crop helpers ----
   const handleCropAspectChange = (aspect: string) => {
     if (!naturalSize.w) return;
-
     let newCrop: CropState;
-
     if (aspect === 'free') {
       newCrop = { x: 0, y: 0, width: naturalSize.w, height: naturalSize.h, aspect: 'free' };
     } else {
@@ -173,26 +152,18 @@ function App() {
       const targetRatio = aw / ah;
       let w = naturalSize.w;
       let h = w / targetRatio;
-      if (h > naturalSize.h) {
-        h = naturalSize.h;
-        w = h * targetRatio;
-      }
+      if (h > naturalSize.h) { h = naturalSize.h; w = h * targetRatio; }
       const x = (naturalSize.w - w) / 2;
       const y = (naturalSize.h - h) / 2;
       newCrop = { x, y, width: w, height: h, aspect };
     }
-
     push({ ...present, crop: newCrop });
     setIsDirty(true);
   };
 
   const handleApplyCrop = () => setIsDirty(true);
-  const handleClearCrop = () => {
-    push({ ...present, crop: null });
-    setIsDirty(true);
-  };
+  const handleClearCrop = () => { push({ ...present, crop: null }); setIsDirty(true); };
 
-  // ---- Resize helpers ----
   const handleResizeWidthChange = (w: number) => {
     setResizeWidth(w);
     if (resizeLock && aspectRef.current) setResizeHeight(Math.round(w / aspectRef.current));
@@ -202,27 +173,14 @@ function App() {
     if (resizeLock && aspectRef.current) setResizeWidth(Math.round(h * aspectRef.current));
   };
   const handleResizeLockToggle = () => setResizeLock((v) => !v);
-  const handleApplyResize = () => {
-    setNaturalSize({ w: resizeWidth, h: resizeHeight });
-    setIsDirty(true);
-  };
+  const handleApplyResize = () => { setNaturalSize({ w: resizeWidth, h: resizeHeight }); setIsDirty(true); };
 
-  // ---- Text helpers ----
   const handleAddText = () => {
     const id = `text-${Date.now()}`;
     const newText: TextLayer = {
-      id,
-      text: 'Double-click to edit',
-      x: 50,
-      y: 50,
-      fontSize: 48,
-      fontFamily: 'Inter, system-ui, sans-serif',
-      color: '#ffffff',
-      strokeColor: '#000000',
-      strokeWidth: 0,
-      align: 'center',
-      bold: false,
-      italic: false,
+      id, text: 'Double-click to edit', x: 50, y: 50, fontSize: 48,
+      fontFamily: 'Inter, system-ui, sans-serif', color: '#ffffff',
+      strokeColor: '#000000', strokeWidth: 0, align: 'center', bold: false, italic: false,
     };
     push({ ...present, texts: [...(present.texts || []), newText] });
     setSelectedTextId(id);
@@ -241,19 +199,11 @@ function App() {
     setIsDirty(true);
   };
 
-  // ---- Shape helpers ----
   const handleAddShape = (type: ShapeLayer['type']) => {
     const id = `shape-${Date.now()}`;
     const newShape: ShapeLayer = {
-      id,
-      type,
-      x: 30,
-      y: 30,
-      width: 40,
-      height: 30,
-      color: '#ffffff',
-      strokeColor: '#000000',
-      strokeWidth: 3,
+      id, type, x: 30, y: 30, width: 40, height: 30,
+      color: '#ffffff', strokeColor: '#000000', strokeWidth: 3,
       filled: type !== 'line' && type !== 'arrow',
     };
     push({ ...present, shapes: [...(present.shapes || []), newShape] });
@@ -275,51 +225,20 @@ function App() {
 
   const handleToolChange = (tool: ToolId) => {
     setActiveTool(tool);
-
-    if (tool === 'rotate') {
-      push({ ...present, rotation: (present.rotation + 90) % 360 });
-      setIsDirty(true);
-    } else if (tool === 'flipH') {
-      push({ ...present, flipH: !present.flipH });
-      setIsDirty(true);
-    } else if (tool === 'flipV') {
-      push({ ...present, flipV: !present.flipV });
-      setIsDirty(true);
-    } else if (tool === 'reset') {
+    if (tool === 'rotate') { push({ ...present, rotation: (present.rotation + 90) % 360 }); setIsDirty(true); }
+    else if (tool === 'flipH') { push({ ...present, flipH: !present.flipH }); setIsDirty(true); }
+    else if (tool === 'flipV') { push({ ...present, flipV: !present.flipV }); setIsDirty(true); }
+    else if (tool === 'reset') {
       if (window.confirm('Reset all edits?')) {
-        push({
-          adjustments: { ...DEFAULT_ADJUSTMENTS },
-          filterId: 'original',
-          filterIntensity: 100,
-          rotation: 0,
-          flipH: false,
-          flipV: false,
-          crop: null,
-          texts: [],
-          shapes: [],
-        });
-        setIsDirty(false);
-        setSelectedTextId(null);
-        setSelectedShapeId(null);
+        push({ adjustments: { ...DEFAULT_ADJUSTMENTS }, filterId: 'original', filterIntensity: 100, rotation: 0, flipH: false, flipV: false, crop: null, texts: [], shapes: [] });
+        setIsDirty(false); setSelectedTextId(null); setSelectedShapeId(null);
       }
-    } else if (tool === 'compare') {
-      setShowOriginal((v) => !v);
-    } else if (tool === 'filters') {
-      setActiveSection('filters');
-      setRightTab('filters');
-    } else if (tool === 'effects' || tool === 'blur') {
-      setActiveSection('effects');
-      setRightTab('effects');
-    } else if (tool === 'adjust' || tool === 'color') {
-      setActiveSection('edit');
-      setRightTab('adjust');
-    } else if (tool === 'crop') {
-      if (!present.crop && naturalSize.w > 0) {
-        push({
-          ...present,
-          crop: { x: 0, y: 0, width: naturalSize.w, height: naturalSize.h, aspect: 'free' },
-        });
-      }
+    } else if (tool === 'compare') setShowOriginal((v) => !v);
+    else if (tool === 'filters') { setActiveSection('filters'); setRightTab('filters'); }
+    else if (tool === 'effects' || tool === 'blur') { setActiveSection('effects'); setRightTab('effects'); }
+    else if (tool === 'adjust' || tool === 'color') { setActiveSection('edit'); setRightTab('adjust'); }
+    else if (tool === 'crop' && !present.crop && naturalSize.w > 0) {
+      push({ ...present, crop: { x: 0, y: 0, width: naturalSize.w, height: naturalSize.h, aspect: 'free' } });
     }
   };
 
@@ -332,24 +251,13 @@ function App() {
 
   const handleExport = async (format: string, quality: number, name: string) => {
     if (!imgRef.current || !imageSrc) return;
-
     try {
-      const mime =
-        format === 'png' ? 'image/png' : format === 'webp' ? 'image/webp' : 'image/jpeg';
-
+      const mime = format === 'png' ? 'image/png' : format === 'webp' ? 'image/webp' : 'image/jpeg';
       const blob = await exportImage(
-        imgRef.current,
-        present.adjustments,
-        present.filterId,
-        present.filterIntensity,
-        present.rotation,
-        present.flipH,
-        present.flipV,
-        mime,
-        quality,
-        present.crop
+        imgRef.current, present.adjustments, present.filterId, present.filterIntensity,
+        present.rotation, present.flipH, present.flipV, mime, quality, present.crop,
+        present.texts || [], present.shapes || []
       );
-
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -368,23 +276,11 @@ function App() {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
-
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        undo();
-      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
-        e.preventDefault();
-        redo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
-        e.preventDefault();
-        handleUploadClick();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        if (imageSrc) setExportOpen(true);
-      } else if (e.key === 'Escape') {
-        setExportOpen(false);
-        setShowOriginal(false);
-      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+      else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
+      else if ((e.ctrlKey || e.metaKey) && e.key === 'o') { e.preventDefault(); handleUploadClick(); }
+      else if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); if (imageSrc) setExportOpen(true); }
+      else if (e.key === 'Escape') { setExportOpen(false); setShowOriginal(false); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -392,25 +288,12 @@ function App() {
 
   return (
     <div className="h-full flex flex-col bg-surface-900 text-text-primary font-sans">
-      <TopToolbar
-        canUndo={canUndo}
-        canRedo={canRedo}
-        hasImage={!!imageSrc}
-        isDirty={isDirty}
-        onUndo={undo}
-        onRedo={redo}
-        onExport={() => setExportOpen(true)}
-        activeSection={activeSection}
-        onSectionChange={handleSectionChange}
-      />
+      <TopToolbar canUndo={canUndo} canRedo={canRedo} hasImage={!!imageSrc} isDirty={isDirty}
+        onUndo={undo} onRedo={redo} onExport={() => setExportOpen(true)}
+        activeSection={activeSection} onSectionChange={handleSectionChange} />
 
       <div className="flex-1 flex overflow-hidden">
-        <ToolSidebar
-          activeTool={activeTool}
-          onToolChange={handleToolChange}
-          onUploadClick={handleUploadClick}
-          hasImage={!!imageSrc}
-        />
+        <ToolSidebar activeTool={activeTool} onToolChange={handleToolChange} onUploadClick={handleUploadClick} hasImage={!!imageSrc} />
 
         <ImageWorkspace
           imageSrc={imageSrc}
@@ -423,66 +306,34 @@ function App() {
           showOriginal={showOriginal}
           onDrop={loadFile}
           onUploadClick={handleUploadClick}
+          texts={texts}
+          shapes={shapes}
         />
 
         <RightPanel
-          activeTab={rightTab}
-          onTabChange={setRightTab}
-          adjustments={adjustments}
-          filterId={filterId}
-          filterIntensity={filterIntensity}
-          onAdjustmentChange={handleAdjustmentChange}
-          onAdjustmentEnd={handleAdjustmentEnd}
-          onFilterChange={handleFilterChange}
-          onFilterIntensityChange={handleFilterIntensity}
-          onResetAll={handleResetAll}
-          imageSrc={imageSrc}
-          activeTool={activeTool}
-          crop={crop}
-          naturalWidth={naturalSize.w}
-          naturalHeight={naturalSize.h}
-          onCropAspectChange={handleCropAspectChange}
-          onApplyCrop={handleApplyCrop}
-          onClearCrop={handleClearCrop}
-          resizeWidth={resizeWidth}
-          resizeHeight={resizeHeight}
-          resizeLock={resizeLock}
-          onResizeWidthChange={handleResizeWidthChange}
-          onResizeHeightChange={handleResizeHeightChange}
-          onResizeLockToggle={handleResizeLockToggle}
-          onApplyResize={handleApplyResize}
-          // Phase 2
-          texts={texts}
-          shapes={shapes}
-          selectedTextId={selectedTextId}
-          selectedShapeId={selectedShapeId}
-          onSelectText={setSelectedTextId}
-          onSelectShape={setSelectedShapeId}
-          onAddText={handleAddText}
-          onUpdateText={handleUpdateText}
-          onDeleteText={handleDeleteText}
-          onAddShape={handleAddShape}
-          onUpdateShape={handleUpdateShape}
-          onDeleteShape={handleDeleteShape}
+          activeTab={rightTab} onTabChange={setRightTab}
+          adjustments={adjustments} filterId={filterId} filterIntensity={filterIntensity}
+          onAdjustmentChange={handleAdjustmentChange} onAdjustmentEnd={handleAdjustmentEnd}
+          onFilterChange={handleFilterChange} onFilterIntensityChange={handleFilterIntensity}
+          onResetAll={handleResetAll} imageSrc={imageSrc}
+          activeTool={activeTool} crop={crop}
+          naturalWidth={naturalSize.w} naturalHeight={naturalSize.h}
+          onCropAspectChange={handleCropAspectChange} onApplyCrop={handleApplyCrop} onClearCrop={handleClearCrop}
+          resizeWidth={resizeWidth} resizeHeight={resizeHeight} resizeLock={resizeLock}
+          onResizeWidthChange={handleResizeWidthChange} onResizeHeightChange={handleResizeHeightChange}
+          onResizeLockToggle={handleResizeLockToggle} onApplyResize={handleApplyResize}
+          texts={texts} shapes={shapes}
+          selectedTextId={selectedTextId} selectedShapeId={selectedShapeId}
+          onSelectText={setSelectedTextId} onSelectShape={setSelectedShapeId}
+          onAddText={handleAddText} onUpdateText={handleUpdateText} onDeleteText={handleDeleteText}
+          onAddShape={handleAddShape} onUpdateShape={handleUpdateShape} onDeleteShape={handleDeleteShape}
         />
       </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/jpg,image/png,image/webp"
-        className="hidden"
-        onChange={handleFileChange}
-      />
+      <input ref={fileInputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/webp" className="hidden" onChange={handleFileChange} />
 
-      <ExportDialog
-        open={exportOpen}
-        onClose={() => setExportOpen(false)}
-        filename={filename}
-        width={naturalSize.w}
-        height={naturalSize.h}
-        onExport={handleExport}
-      />
+      <ExportDialog open={exportOpen} onClose={() => setExportOpen(false)} filename={filename}
+        width={naturalSize.w} height={naturalSize.h} onExport={handleExport} />
     </div>
   );
 }
