@@ -1,16 +1,423 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PhotoEdit Studio</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  </head>
-  <body class="bg-surface-900 text-text-primary antialiased">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhotoEdit Studio</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%233478F6'/><path d='M8 20l4-5 3 4 5-7 4 8H8z' fill='white' opacity='0.9'/><circle cx='12' cy='12' r='2' fill='white'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: { 900: '#101318', 800: '#141920', 700: '#171D25', 600: '#1C2430', 500: '#28313D' },
+            accent: { DEFAULT: '#3478F6', hover: '#2B68D9' },
+            text: { primary: '#F1F4F8', secondary: '#9CA7B5', muted: '#6B7585' }
+          },
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body, #root { height: 100%; margin: 0; overflow: hidden; }
+    body { font-family: Inter, system-ui, sans-serif; background: #101318; color: #F1F4F8; }
+    input[type=range] { -webkit-appearance: none; appearance: none; height: 4px; background: #28313D; border-radius: 2px; outline: none; width: 100%; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #3478F6; border-radius: 50%; cursor: pointer; border: 2px solid #F1F4F8; }
+    .checkerboard {
+      background-color: #12161c;
+      background-image: linear-gradient(45deg,#1a2028 25%,transparent 25%),linear-gradient(-45deg,#1a2028 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#1a2028 75%),linear-gradient(-45deg,transparent 75%,#1a2028 75%);
+      background-size: 16px 16px; background-position: 0 0,0 8px,8px -8px,-8px 0;
+    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: #28313D; border-radius: 4px; }
+    .tool-btn { transition: all 0.15s; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script type="text/babel" data-presets="react">
+    const { useState, useRef, useCallback, useEffect } = React;
+
+    const DEFAULT_ADJ = {
+      brightness: 0, contrast: 0, saturation: 0, exposure: 0,
+      highlights: 0, shadows: 0, temperature: 0, tint: 0,
+      hue: 0, fade: 0, vignette: 0, sharpness: 0
+    };
+
+    const FILTERS = [
+      { id: 'original', name: 'Original', css: '' },
+      { id: 'natural', name: 'Natural', css: 'contrast(1.05) saturate(1.05)' },
+      { id: 'warm', name: 'Warm', css: 'sepia(0.15) saturate(1.2) hue-rotate(-10deg)' },
+      { id: 'cool', name: 'Cool', css: 'saturate(0.9) hue-rotate(15deg) brightness(1.02)' },
+      { id: 'vintage', name: 'Vintage', css: 'sepia(0.4) contrast(0.95) brightness(0.95) saturate(0.85)' },
+      { id: 'bw', name: 'B&W', css: 'grayscale(1)' },
+      { id: 'mono', name: 'Mono', css: 'grayscale(1) contrast(1.15)' },
+      { id: 'cinematic', name: 'Cinematic', css: 'contrast(1.2) saturate(0.85) brightness(0.95)' },
+      { id: 'portrait', name: 'Portrait', css: 'contrast(1.05) brightness(1.05) saturate(0.95)' },
+      { id: 'landscape', name: 'Landscape', css: 'contrast(1.1) saturate(1.25) brightness(1.02)' },
+      { id: 'soft', name: 'Soft', css: 'brightness(1.05) contrast(0.9) saturate(0.9)' },
+      { id: 'dramatic', name: 'Dramatic', css: 'contrast(1.35) saturate(1.1) brightness(0.95)' },
+      { id: 'faded', name: 'Faded', css: 'contrast(0.85) brightness(1.08) saturate(0.75)' },
+      { id: 'matte', name: 'Matte', css: 'contrast(0.9) brightness(1.05) saturate(0.85)' },
+      { id: 'golden', name: 'Golden Hour', css: 'sepia(0.25) saturate(1.3) brightness(1.05) hue-rotate(-5deg)' },
+      { id: 'film', name: 'Film', css: 'contrast(1.1) saturate(0.9) brightness(0.98)' },
+      { id: 'highcontrast', name: 'High Contrast', css: 'contrast(1.4) saturate(1.05)' },
+      { id: 'dreamy', name: 'Dreamy', css: 'brightness(1.08) contrast(0.9) saturate(1.1)' },
+    ];
+
+    function buildFilter(adj, filterId) {
+      const parts = [];
+      const b = 1 + adj.brightness / 100 + adj.exposure / 120;
+      const c = 1 + adj.contrast / 100;
+      const s = 1 + adj.saturation / 100;
+      parts.push(`brightness(${b.toFixed(3)})`);
+      parts.push(`contrast(${c.toFixed(3)})`);
+      parts.push(`saturate(${s.toFixed(3)})`);
+      if (adj.hue) parts.push(`hue-rotate(${adj.hue}deg)`);
+      if (adj.temperature > 0) parts.push(`sepia(${(adj.temperature / 200).toFixed(3)})`);
+      else if (adj.temperature < 0) parts.push(`hue-rotate(${(adj.temperature / 4).toFixed(1)}deg)`);
+      if (adj.tint) parts.push(`hue-rotate(${(adj.tint / 5).toFixed(1)}deg)`);
+      if (adj.fade > 0) parts.push(`opacity(${(1 - adj.fade / 200).toFixed(3)})`);
+      const f = FILTERS.find(x => x.id === filterId);
+      if (f && f.css) parts.push(f.css);
+      return parts.join(' ');
+    }
+
+    function Slider({ label, value, min = -100, max = 100, onChange, desc }) {
+      return (
+        <div className="mb-4">
+          <div className="flex justify-between mb-1.5">
+            <label className="text-[13px] font-medium">{label}</label>
+            <span className="text-[12px] text-text-secondary tabular-nums w-10 text-right">{value > 0 ? `+${value}` : value}</span>
+          </div>
+          <input type="range" min={min} max={max} value={value} onChange={e => onChange(+e.target.value)} />
+          {desc && <p className="text-[11px] text-text-muted mt-1">{desc}</p>}
+        </div>
+      );
+    }
+
+    function App() {
+      const fileRef = useRef();
+      const imgRef = useRef();
+      const [src, setSrc] = useState(null);
+      const [filename, setFilename] = useState('image');
+      const [size, setSize] = useState({ w: 0, h: 0 });
+      const [adj, setAdj] = useState({ ...DEFAULT_ADJ });
+      const [filterId, setFilterId] = useState('original');
+      const [rotation, setRotation] = useState(0);
+      const [flipH, setFlipH] = useState(false);
+      const [flipV, setFlipV] = useState(false);
+      const [showOriginal, setShowOriginal] = useState(false);
+      const [tab, setTab] = useState('adjust');
+      const [activeTool, setActiveTool] = useState('adjust');
+      const [exportOpen, setExportOpen] = useState(false);
+      const [history, setHistory] = useState([]);
+      const [future, setFuture] = useState([]);
+      const [zoom, setZoom] = useState(1);
+
+      const pushHistory = useCallback((state) => {
+        setHistory(h => [...h.slice(-39), { adj, filterId, rotation, flipH, flipV }]);
+        setFuture([]);
+      }, [adj, filterId, rotation, flipH, flipV]);
+
+      const loadFile = (file) => {
+        if (!file.type.match(/^image\/(jpeg|jpg|png|webp)$/i)) {
+          alert('Use JPEG, PNG or WebP');
+          return;
+        }
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          if (src) URL.revokeObjectURL(src);
+          setSrc(url);
+          setFilename(file.name);
+          setSize({ w: img.naturalWidth, h: img.naturalHeight });
+          imgRef.current = img;
+          setAdj({ ...DEFAULT_ADJ });
+          setFilterId('original');
+          setRotation(0);
+          setFlipH(false);
+          setFlipV(false);
+          setHistory([]);
+          setFuture([]);
+        };
+        img.src = url;
+      };
+
+      const undo = () => {
+        if (!history.length) return;
+        const prev = history[history.length - 1];
+        setFuture(f => [{ adj, filterId, rotation, flipH, flipV }, ...f]);
+        setHistory(h => h.slice(0, -1));
+        setAdj(prev.adj);
+        setFilterId(prev.filterId);
+        setRotation(prev.rotation);
+        setFlipH(prev.flipH);
+        setFlipV(prev.flipV);
+      };
+
+      const redo = () => {
+        if (!future.length) return;
+        const next = future[0];
+        setHistory(h => [...h, { adj, filterId, rotation, flipH, flipV }]);
+        setFuture(f => f.slice(1));
+        setAdj(next.adj);
+        setFilterId(next.filterId);
+        setRotation(next.rotation);
+        setFlipH(next.flipH);
+        setFlipV(next.flipV);
+      };
+
+      const changeAdj = (key, val) => {
+        setAdj(a => ({ ...a, [key]: val }));
+      };
+
+      const commitAdj = () => pushHistory();
+
+      const doExport = (format, quality, name) => {
+        if (!imgRef.current) return;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = imgRef.current;
+        const rad = rotation * Math.PI / 180;
+        const cos = Math.abs(Math.cos(rad));
+        const sin = Math.abs(Math.sin(rad));
+        const w = img.naturalWidth, h = img.naturalHeight;
+        canvas.width = Math.round(w * cos + h * sin);
+        canvas.height = Math.round(w * sin + h * cos);
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(rad);
+        ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+        ctx.filter = showOriginal ? 'none' : buildFilter(adj, filterId);
+        ctx.drawImage(img, -w / 2, -h / 2);
+        if (adj.vignette > 0) {
+          const g = ctx.createRadialGradient(0, 0, Math.min(w, h) * 0.3, 0, 0, Math.max(w, h) * 0.7);
+          g.addColorStop(0, 'rgba(0,0,0,0)');
+          g.addColorStop(1, `rgba(0,0,0,${adj.vignette / 100 * 0.85})`);
+          ctx.fillStyle = g;
+          ctx.fillRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+        }
+        canvas.toBlob(blob => {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = `${name}.${format === 'jpeg' ? 'jpg' : format}`;
+          a.click();
+          setExportOpen(false);
+        }, `image/${format}`, quality);
+      };
+
+      useEffect(() => {
+        const h = (e) => {
+          if (e.target.tagName === 'INPUT') return;
+          if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+          if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
+          if ((e.ctrlKey || e.metaKey) && e.key === 'o') { e.preventDefault(); fileRef.current?.click(); }
+          if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); if (src) setExportOpen(true); }
+          if (e.key === 'Escape') { setExportOpen(false); setShowOriginal(false); }
+        };
+        window.addEventListener('keydown', h);
+        return () => window.removeEventListener('keydown', h);
+      });
+
+      const cssFilter = showOriginal ? 'none' : buildFilter(adj, filterId);
+      const transform = `scale(${zoom}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`;
+
+      const tools = [
+        { id: 'adjust', label: 'Adjust' },
+        { id: 'filters', label: 'Filters' },
+        { id: 'rotate', label: 'Rotate 90°' },
+        { id: 'flipH', label: 'Flip H' },
+        { id: 'flipV', label: 'Flip V' },
+        { id: 'compare', label: 'Before/After' },
+        { id: 'reset', label: 'Reset All' },
+      ];
+
+      const handleTool = (id) => {
+        setActiveTool(id);
+        if (id === 'rotate') { pushHistory(); setRotation(r => (r + 90) % 360); }
+        else if (id === 'flipH') { pushHistory(); setFlipH(f => !f); }
+        else if (id === 'flipV') { pushHistory(); setFlipV(f => !f); }
+        else if (id === 'compare') setShowOriginal(v => !v);
+        else if (id === 'reset') {
+          if (confirm('Reset all edits?')) {
+            pushHistory();
+            setAdj({ ...DEFAULT_ADJ });
+            setFilterId('original');
+            setRotation(0);
+            setFlipH(false);
+            setFlipV(false);
+          }
+        } else if (id === 'filters') setTab('filters');
+        else if (id === 'adjust') setTab('adjust');
+      };
+
+      return (
+        <div className="h-full flex flex-col bg-surface-900 text-text-primary">
+          {/* Top bar */}
+          <header className="h-14 shrink-0 flex items-center justify-between px-4 bg-surface-800 border-b border-surface-500">
+            <div className="flex items-center gap-2 min-w-[180px]">
+              <div className="w-8 h-8 rounded-md bg-accent flex items-center justify-center text-white font-bold text-sm">P</div>
+              <span className="font-semibold text-[15px] hidden sm:block">PhotoEdit Studio</span>
+            </div>
+            <nav className="flex gap-1">
+              {['Edit', 'Filters', 'Effects'].map(s => (
+                <button key={s} onClick={() => setTab(s.toLowerCase() === 'edit' ? 'adjust' : s.toLowerCase())}
+                  className={`px-4 py-1.5 text-[13px] font-medium rounded-md ${tab === (s.toLowerCase() === 'edit' ? 'adjust' : s.toLowerCase()) ? 'bg-accent/20 text-accent' : 'text-text-secondary hover:text-text-primary hover:bg-surface-600'}`}>
+                  {s}
+                </button>
+              ))}
+            </nav>
+            <div className="flex items-center gap-1.5 min-w-[180px] justify-end">
+              <button onClick={undo} disabled={!history.length} className="p-2 rounded-md text-text-secondary hover:bg-surface-600 disabled:opacity-30" title="Undo">↩</button>
+              <button onClick={redo} disabled={!future.length} className="p-2 rounded-md text-text-secondary hover:bg-surface-600 disabled:opacity-30" title="Redo">↪</button>
+              <div className="w-px h-5 bg-surface-500 mx-1" />
+              <button onClick={() => src && setExportOpen(true)} disabled={!src}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-accent hover:bg-accent-hover text-white text-[13px] font-medium disabled:opacity-40">
+                Export
+              </button>
+            </div>
+          </header>
+
+          <div className="flex-1 flex overflow-hidden">
+            {/* Left sidebar */}
+            <aside className="w-[220px] shrink-0 bg-surface-800 border-r border-surface-500 flex flex-col overflow-hidden hidden md:flex">
+              <div className="p-3 border-b border-surface-500">
+                <button onClick={() => fileRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-md bg-accent hover:bg-accent-hover text-white text-[13px] font-medium">
+                  Upload Image
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto py-2 px-1.5 space-y-0.5">
+                {tools.map(t => (
+                  <button key={t.id} onClick={() => handleTool(t.id)} disabled={!src && t.id !== 'adjust'}
+                    className={`tool-btn w-full text-left px-2.5 py-2 rounded-md text-[13px] ${activeTool === t.id ? 'bg-accent/15 text-accent border border-accent/30' : 'text-text-secondary hover:bg-surface-600 border border-transparent'} disabled:opacity-40`}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </aside>
+
+            {/* Workspace */}
+            <main className="flex-1 relative bg-surface-900 flex flex-col overflow-hidden"
+              onDragOver={e => e.preventDefault()}
+              onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) loadFile(f); }}>
+              <div className="flex-1 flex items-center justify-center overflow-hidden">
+                {!src ? (
+                  <div className="text-center px-6">
+                    <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-surface-700 border border-surface-500 flex items-center justify-center text-3xl text-text-muted">🖼</div>
+                    <p className="text-[15px] font-medium mb-1">Drop an image here to start editing</p>
+                    <p className="text-[13px] text-text-secondary mb-4">JPEG, PNG, or WebP</p>
+                    <button onClick={() => fileRef.current?.click()}
+                      className="px-5 py-2.5 rounded-md bg-accent hover:bg-accent-hover text-white text-[13px] font-medium">
+                      Upload Image
+                    </button>
+                  </div>
+                ) : (
+                  <div className="checkerboard rounded-sm shadow-2xl overflow-hidden">
+                    <img src={src} alt="preview" draggable={false}
+                      className="max-w-[min(90vw,900px)] max-h-[calc(100vh-140px)] object-contain block"
+                      style={{ filter: cssFilter, transform, transformOrigin: 'center' }} />
+                  </div>
+                )}
+              </div>
+              {src && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-surface-800/90 border border-surface-500 rounded-lg px-2 py-1.5">
+                  <button onClick={() => setZoom(z => Math.max(0.25, z - 0.25))} className="p-1.5 text-text-secondary hover:text-white">−</button>
+                  <span className="text-[12px] w-12 text-center text-text-secondary">{Math.round(zoom * 100)}%</span>
+                  <button onClick={() => setZoom(z => Math.min(2, z + 0.25))} className="p-1.5 text-text-secondary hover:text-white">+</button>
+                  <button onClick={() => setZoom(1)} className="p-1.5 text-text-secondary hover:text-white text-[12px] ml-1">Fit</button>
+                </div>
+              )}
+            </main>
+
+            {/* Right panel */}
+            <aside className="w-[300px] shrink-0 bg-surface-800 border-l border-surface-500 flex flex-col overflow-hidden hidden lg:flex">
+              <div className="flex border-b border-surface-500">
+                {['adjust', 'filters', 'effects'].map(t => (
+                  <button key={t} onClick={() => setTab(t)}
+                    className={`flex-1 py-3 text-[13px] font-medium capitalize relative ${tab === t ? 'text-accent' : 'text-text-secondary hover:text-text-primary'}`}>
+                    {t}
+                    {tab === t && <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-accent rounded-full" />}
+                  </button>
+                ))}
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                {tab === 'adjust' && (
+                  <>
+                    <div className="flex justify-between mb-4">
+                      <h3 className="text-[14px] font-semibold">Adjustments</h3>
+                      <button onClick={() => { pushHistory(); setAdj({ ...DEFAULT_ADJ }); }} className="text-[12px] text-accent hover:underline">Reset All</button>
+                    </div>
+                    <Slider label="Brightness" value={adj.brightness} onChange={v => changeAdj('brightness', v)} desc="Overall brightness" />
+                    <Slider label="Contrast" value={adj.contrast} onChange={v => changeAdj('contrast', v)} />
+                    <Slider label="Saturation" value={adj.saturation} onChange={v => changeAdj('saturation', v)} />
+                    <Slider label="Exposure" value={adj.exposure} onChange={v => changeAdj('exposure', v)} />
+                    <Slider label="Temperature" value={adj.temperature} onChange={v => changeAdj('temperature', v)} desc="Warm / Cool" />
+                    <Slider label="Tint" value={adj.tint} onChange={v => changeAdj('tint', v)} />
+                    <Slider label="Hue" value={adj.hue} min={-180} max={180} onChange={v => changeAdj('hue', v)} />
+                    <Slider label="Fade" value={adj.fade} min={0} max={100} onChange={v => changeAdj('fade', v)} />
+                    <Slider label="Vignette" value={adj.vignette} min={0} max={100} onChange={v => changeAdj('vignette', v)} />
+                  </>
+                )}
+                {tab === 'filters' && (
+                  <>
+                    <h3 className="text-[14px] font-semibold mb-3">Filters</h3>
+                    <div className="grid grid-cols-3 gap-2">
+                      {FILTERS.map(f => (
+                        <button key={f.id} onClick={() => { pushHistory(); setFilterId(f.id); }}
+                          className={`rounded-md overflow-hidden border-2 ${filterId === f.id ? 'border-accent' : 'border-transparent hover:border-surface-500'}`}>
+                          <div className="aspect-square bg-surface-600 overflow-hidden" style={{ filter: f.css || 'none' }}>
+                            {src ? <img src={src} className="w-full h-full object-cover" draggable={false} /> : <div className="w-full h-full bg-surface-600" />}
+                          </div>
+                          <div className="py-1 text-[11px] text-center bg-surface-700 truncate">{f.name}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {tab === 'effects' && (
+                  <p className="text-[13px] text-text-secondary">Core adjustments and filters are fully working. More advanced effects coming soon.</p>
+                )}
+              </div>
+            </aside>
+          </div>
+
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) loadFile(f); e.target.value = ''; }} />
+
+          {/* Export modal */}
+          {exportOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setExportOpen(false)}>
+              <div className="bg-surface-700 border border-surface-500 rounded-xl w-full max-w-md p-5" onClick={e => e.stopPropagation()}>
+                <h2 className="text-[16px] font-semibold mb-4">Export Image</h2>
+                <p className="text-[13px] text-text-secondary mb-4">{size.w} × {size.h} px · {filename}</p>
+                <div className="flex gap-2 mb-4">
+                  {['jpeg', 'png', 'webp'].map(f => (
+                    <button key={f} onClick={() => doExport(f, 0.92, filename.replace(/\.[^.]+$/, '') || 'edited')}
+                      className="flex-1 py-2.5 rounded-md bg-accent hover:bg-accent-hover text-white text-[13px] font-medium capitalize">
+                      {f.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => setExportOpen(false)} className="w-full py-2 rounded-md bg-surface-600 text-[13px]">Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
 </html>
