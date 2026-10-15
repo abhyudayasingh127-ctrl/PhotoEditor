@@ -23,6 +23,7 @@ function App() {
   const [naturalSize, setNaturalSize] = useState({ w: 0, h: 0 });
   const [activeTool, setActiveTool] = useState<ToolId>('adjust');
   const [activeSection, setActiveSection] = useState('edit');
+  const [rightTab, setRightTab] = useState('adjust');
   const [showOriginal, setShowOriginal] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -70,7 +71,6 @@ function App() {
       setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
       imgRef.current = img;
 
-      // Reset history
       const reset: HistoryEntry = {
         adjustments: { ...DEFAULT_ADJUSTMENTS },
         filterId: 'original',
@@ -98,7 +98,6 @@ function App() {
     e.target.value = '';
   };
 
-  // Adjustment handlers
   const handleAdjustmentChange = (key: keyof Adjustments, value: number) => {
     startSliding();
     replacePresent({
@@ -139,7 +138,6 @@ function App() {
     setIsDirty(true);
   };
 
-  // Tool actions
   const handleToolChange = (tool: ToolId) => {
     setActiveTool(tool);
 
@@ -169,14 +167,23 @@ function App() {
       setShowOriginal((v) => !v);
     } else if (tool === 'filters') {
       setActiveSection('filters');
+      setRightTab('filters');
     } else if (tool === 'effects') {
       setActiveSection('effects');
+      setRightTab('effects');
     } else if (tool === 'adjust' || tool === 'color') {
       setActiveSection('edit');
+      setRightTab('adjust');
     }
   };
 
-  // Export
+  const handleSectionChange = (s: string) => {
+    setActiveSection(s);
+    if (s === 'filters') setRightTab('filters');
+    else if (s === 'effects') setRightTab('effects');
+    else setRightTab('adjust');
+  };
+
   const handleExport = async (format: string, quality: number, name: string) => {
     if (!imgRef.current || !imageSrc) return;
 
@@ -214,7 +221,6 @@ function App() {
     }
   };
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -241,14 +247,6 @@ function App() {
     return () => window.removeEventListener('keydown', handler);
   }, [undo, redo, imageSrc]);
 
-  // Map section to right panel tab
-  const rightTab =
-    activeSection === 'filters'
-      ? 'filters'
-      : activeSection === 'effects'
-      ? 'effects'
-      : 'adjust';
-
   return (
     <div className="h-full flex flex-col bg-surface-900 text-text-primary font-sans">
       <TopToolbar
@@ -260,7 +258,7 @@ function App() {
         onRedo={redo}
         onExport={() => setExportOpen(true)}
         activeSection={activeSection}
-        onSectionChange={setActiveSection}
+        onSectionChange={handleSectionChange}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -286,6 +284,7 @@ function App() {
 
         <RightPanel
           activeTab={rightTab}
+          onTabChange={setRightTab}
           adjustments={adjustments}
           filterId={filterId}
           filterIntensity={filterIntensity}
