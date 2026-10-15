@@ -2,29 +2,23 @@
 
 A professional, fully client-side photo editing web application.
 
+**Live demo (after enabling Pages):**  
+https://abhyudayasingh127-ctrl.github.io/hotelwaliweb/
+
 ## Features
 
-- **Professional dark UI** inspired by desktop photo editors
-- **Real-time adjustments**: Brightness, Contrast, Saturation, Exposure, Highlights, Shadows, Temperature, Tint, Hue, Fade, Vignette, Sharpness
-- **18 Filter presets** with live thumbnails generated from your image
-- **Rotate** (90°) and **Flip** horizontal / vertical
-- **Undo / Redo** history with keyboard shortcuts
-- **Before / After** comparison
-- **Zoom & Pan** (25% – 200%)
-- **Export** as JPEG, PNG, or WebP with quality control
-- **Drag & drop** + file picker upload
-- **Fully responsive** layout
-- **100% local** – no images leave your browser
+- Professional dark charcoal UI
+- Real-time adjustments (Brightness, Contrast, Saturation, Exposure, Highlights, Shadows, Temperature, Tint, Hue, Fade, Vignette, Sharpness)
+- 18 Filter presets with live thumbnails from your image
+- Rotate & Flip
+- Undo / Redo + keyboard shortcuts
+- Before / After comparison
+- Zoom & Pan
+- Export as JPEG / PNG / WebP
+- Drag & drop upload
+- 100% local processing (privacy first)
 
-## Tech Stack
-
-- React 18 + TypeScript
-- Vite
-- Tailwind CSS
-- Lucide icons
-- HTML Canvas for export
-
-## Getting Started
+## Quick Start (Local)
 
 ```bash
 npm install
@@ -33,19 +27,23 @@ npm run dev
 
 Open http://localhost:5173
 
+## Deploy to GitHub Pages
+
+1. Go to your repo → **Settings → Pages**
+2. Under **Source**, select **GitHub Actions**
+3. The workflow will automatically build and deploy every time you push to `main`
+4. Wait 1–2 minutes, then open:  
+   https://abhyudayasingh127-ctrl.github.io/hotelwaliweb/
+
+You can also trigger it manually from the **Actions** tab.
+
 ## Build for production
 
 ```bash
 npm run build
 ```
 
-The `dist/` folder can be deployed to GitHub Pages, Netlify, Vercel, or any static host.
-
-### GitHub Pages
-
-1. Go to repo **Settings → Pages**
-2. Source: Deploy from branch `main` / folder `/docs` or use GitHub Actions
-3. Or simply push the `dist` contents after build
+Output goes to the `dist/` folder.
 
 ## Keyboard Shortcuts
 
@@ -57,12 +55,13 @@ The `dist/` folder can be deployed to GitHub Pages, Netlify, Vercel, or any stat
 | `Ctrl/Cmd + S` | Export |
 | `Esc` | Close dialog / exit compare |
 
-## Limitations (current version)
+## Tech Stack
 
-- Advanced pixel-level effects (true Gaussian blur, film grain) are placeholders
-- Crop tool UI is present but full interactive crop rectangle will be enhanced next
-- Text / Shapes layers coming in a future update
-- No persistent project save yet (session only)
+- React 18 + TypeScript
+- Vite
+- Tailwind CSS
+- Lucide icons
+- HTML Canvas
 
 ## License
 
