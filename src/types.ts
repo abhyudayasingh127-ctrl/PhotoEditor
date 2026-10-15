@@ -12,6 +12,8 @@ export interface Adjustments {
   fade: number;
   vignette: number;
   sharpness: number;
+  blur: number;       // 0-20
+  grain: number;      // 0-100
 }
 
 export interface CropState {
@@ -19,7 +21,7 @@ export interface CropState {
   y: number;
   width: number;
   height: number;
-  aspect: string;
+  aspect: string; // 'free' | '1:1' | '4:3' | '3:2' | '16:9' | '9:16' | '3:4'
 }
 
 export interface ImageState {
@@ -75,7 +77,19 @@ export const DEFAULT_ADJUSTMENTS: Adjustments = {
   fade: 0,
   vignette: 0,
   sharpness: 0,
+  blur: 0,
+  grain: 0,
 };
+
+export const ASPECT_RATIOS = [
+  { id: 'free', label: 'Free' },
+  { id: '1:1', label: '1:1' },
+  { id: '4:3', label: '4:3' },
+  { id: '3:2', label: '3:2' },
+  { id: '16:9', label: '16:9' },
+  { id: '9:16', label: '9:16' },
+  { id: '3:4', label: '3:4' },
+] as const;
 
 export const FILTERS = [
   { id: 'original', name: 'Original', css: '' },
