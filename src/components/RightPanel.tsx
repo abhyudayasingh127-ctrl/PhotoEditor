@@ -41,6 +41,8 @@ interface Props {
   onDeleteShape: (id: string) => void;
 }
 
+const panelClass = "w-full md:w-[300px] lg:w-[320px] shrink-0 bg-surface-800 border-l border-surface-500 flex flex-col overflow-hidden h-full";
+
 export default function RightPanel(props: Props) {
   const {
     activeTab, onTabChange, adjustments, filterId, filterIntensity,
@@ -59,7 +61,7 @@ export default function RightPanel(props: Props) {
 
   if (activeTool === 'crop') {
     return (
-      <aside className="w-[320px] shrink-0 bg-surface-800 border-l border-surface-500 flex flex-col overflow-hidden">
+      <aside className={panelClass}>
         <div className="px-4 py-3 border-b border-surface-500"><h3 className="text-[14px] font-semibold">Crop</h3></div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           <div>
@@ -90,7 +92,7 @@ export default function RightPanel(props: Props) {
 
   if (activeTool === 'resize') {
     return (
-      <aside className="w-[320px] shrink-0 bg-surface-800 border-l border-surface-500 flex flex-col overflow-hidden">
+      <aside className={panelClass}>
         <div className="px-4 py-3 border-b border-surface-500"><h3 className="text-[14px] font-semibold">Resize</h3></div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           <div className="text-[12px] text-text-muted">Original: {naturalWidth} × {naturalHeight}px</div>
@@ -118,7 +120,7 @@ export default function RightPanel(props: Props) {
 
   if (activeTool === 'text') {
     return (
-      <aside className="w-[320px] shrink-0 bg-surface-800 border-l border-surface-500 flex flex-col overflow-hidden">
+      <aside className={panelClass}>
         <div className="px-4 py-3 border-b border-surface-500 flex items-center justify-between">
           <h3 className="text-[14px] font-semibold">Text</h3>
           <button onClick={onAddText} className="text-[12px] text-accent hover:underline">+ Add Text</button>
@@ -178,7 +180,7 @@ export default function RightPanel(props: Props) {
 
   if (activeTool === 'shapes') {
     return (
-      <aside className="w-[320px] shrink-0 bg-surface-800 border-l border-surface-500 flex flex-col overflow-hidden">
+      <aside className={panelClass}>
         <div className="px-4 py-3 border-b border-surface-500"><h3 className="text-[14px] font-semibold">Shapes</h3></div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           <div className="grid grid-cols-2 gap-2">
@@ -219,9 +221,8 @@ export default function RightPanel(props: Props) {
     );
   }
 
-  // Default tabs
   return (
-    <aside className="w-[320px] shrink-0 bg-surface-800 border-l border-surface-500 flex flex-col overflow-hidden">
+    <aside className={panelClass}>
       <div className="flex border-b border-surface-500">
         {['adjust', 'filters', 'effects'].map((tab) => (
           <button key={tab} onClick={() => onTabChange(tab)}
@@ -255,7 +256,6 @@ export default function RightPanel(props: Props) {
             <SliderControl label="Vignette" value={adjustments.vignette} min={0} max={100} onChange={(v) => onAdjustmentChange('vignette', v)} onChangeEnd={onAdjustmentEnd} />
             <SliderControl label="Sharpness" value={adjustments.sharpness} min={0} max={100} onChange={(v) => onAdjustmentChange('sharpness', v)} onChangeEnd={onAdjustmentEnd} />
 
-            {/* Phase 3 – Curves */}
             <div className="mt-6 pt-4 border-t border-surface-500">
               <h4 className="text-[13px] font-semibold mb-3 text-text-secondary">Curves</h4>
               <SliderControl label="Shadows" value={adjustments.curveShadows || 0} min={-100} max={100}
@@ -266,7 +266,6 @@ export default function RightPanel(props: Props) {
                 onChange={(v) => onAdjustmentChange('curveHighlights', v)} onChangeEnd={onAdjustmentEnd} />
             </div>
 
-            {/* Phase 3 – HSL */}
             <div className="mt-6 pt-4 border-t border-surface-500">
               <h4 className="text-[13px] font-semibold mb-3 text-text-secondary">HSL / Color</h4>
               <SliderControl label="Hue Shift" value={adjustments.hslHue || 0} min={-180} max={180}
