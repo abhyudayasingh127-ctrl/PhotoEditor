@@ -7,6 +7,7 @@ https://abhyudayasingh127-ctrl.github.io/hotelwaliweb/
 
 ## Features
 
+### Core
 - Professional dark charcoal UI
 - Real-time adjustments (Brightness, Contrast, Saturation, Exposure, Highlights, Shadows, Temperature, Tint, Hue, Fade, Vignette, Sharpness)
 - 18 Filter presets with live thumbnails from your image
@@ -17,6 +18,12 @@ https://abhyudayasingh127-ctrl.github.io/hotelwaliweb/
 - Export as JPEG / PNG / WebP
 - Drag & drop upload
 - 100% local processing (privacy first)
+
+### Phase 1 (New)
+- **Crop** – aspect ratio presets (Free, 1:1, 4:3, 3:2, 16:9, 9:16, 3:4)
+- **Resize** – width / height with optional aspect lock
+- **Blur** – live soft blur
+- **Film Grain** – realistic noise applied on export
 
 ## Quick Start (Local)
 
