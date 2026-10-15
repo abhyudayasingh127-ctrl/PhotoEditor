@@ -206,24 +206,29 @@ export default function RightPanel({
         {activeTab === 'effects' && (
           <div>
             <h3 className="text-[14px] font-semibold mb-3">Effects</h3>
+
             <SliderControl
               label="Blur"
-              value={0}
+              value={adjustments.blur}
               min={0}
               max={20}
-              onChange={() => {}}
-              description="Coming in next update"
+              onChange={(v) => onAdjustmentChange('blur', v)}
+              onChangeEnd={onAdjustmentEnd}
+              description="Soft blur (Gaussian-like)"
             />
+
             <SliderControl
               label="Film Grain"
-              value={0}
+              value={adjustments.grain}
               min={0}
               max={100}
-              onChange={() => {}}
-              description="Coming in next update"
+              onChange={(v) => onAdjustmentChange('grain', v)}
+              onChangeEnd={onAdjustmentEnd}
+              description="Add realistic film noise"
             />
-            <p className="text-[12px] text-text-muted mt-4 leading-relaxed">
-              Core adjustments & filters are fully functional. Advanced pixel effects (true Gaussian blur, film grain, etc.) will be added in the next update.
+
+            <p className="text-[12px] text-text-muted mt-5 leading-relaxed">
+              Blur is applied live via CSS. Film grain is fully rendered on export for best quality.
             </p>
           </div>
         )}
