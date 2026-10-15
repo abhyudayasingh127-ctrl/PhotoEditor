@@ -8,10 +8,30 @@ export function buildCssFilter(
 ): string {
   const parts: string[] = [];
 
-  const brightness = 1 + adj.brightness / 100 + adj.exposure / 120;
-  const contrast = 1 + adj.contrast / 100;
-  const saturation = 1 + adj.saturation / 100;
-  const hue = adj.hue;
+  // Combine classic + curve influences for brightness/contrast
+  const curveBoost =
+    (adj.curveShadows || 0) * 0.15 +
+    (adj.curveMidtones || 0) * 0.25 +
+    (adj.curveHighlights || 0) * 0.15;
+
+  const brightness =
+    1 +
+    adj.brightness / 100 +
+    adj.exposure / 120 +
+    (adj.hslLum || 0) / 200 +
+    curveBoost / 100;
+
+  const contrast =
+    1 +
+    adj.contrast / 100 +
+    (adj.curveMidtones || 0) / 300;
+
+  const saturation =
+    1 +
+    adj.saturation / 100 +
+    (adj.hslSat || 0) / 100;
+
+  const hue = adj.hue + (adj.hslHue || 0);
 
   parts.push(`brightness(${brightness.toFixed(3)})`);
   parts.push(`contrast(${contrast.toFixed(3)})`);
@@ -37,6 +57,12 @@ export function buildCssFilter(
     parts.push(`blur(${(adj.blur * 0.6).toFixed(2)}px)`);
   }
 
+  // Soft approximation of shadow/highlight curves via brightness
+  if ((adj.curveShadows || 0) !== 0) {
+    const s = 1 + adj.curveShadows / 250;
+    parts.push(`brightness(${s.toFixed(3)})`);
+  }
+
   const filter = FILTERS.find((f) => f.id === filterId);
   if (filter && filter.css && filterId !== 'original' && filterIntensity > 0) {
     parts.push(filter.css);
@@ -45,7 +71,6 @@ export function buildCssFilter(
   return parts.join(' ');
 }
 
-/** Draw shapes onto canvas (percentages relative to canvas size) */
 function drawShapes(ctx: CanvasRenderingContext2D, shapes: ShapeLayer[], w: number, h: number) {
   for (const s of shapes) {
     const x = (s.x / 100) * w;
@@ -89,7 +114,6 @@ function drawShapes(ctx: CanvasRenderingContext2D, shapes: ShapeLayer[], w: numb
   }
 }
 
-/** Draw text layers onto canvas */
 function drawTexts(ctx: CanvasRenderingContext2D, texts: TextLayer[], w: number, h: number) {
   for (const t of texts) {
     const x = (t.x / 100) * w;
@@ -111,7 +135,6 @@ function drawTexts(ctx: CanvasRenderingContext2D, texts: TextLayer[], w: number,
   }
 }
 
-/** Apply adjustments + filter + texts/shapes to a canvas and return a blob */
 export async function exportImage(
   source: HTMLImageElement | HTMLCanvasElement,
   adj: Adjustments,
@@ -157,7 +180,6 @@ export async function exportImage(
   ctx.drawImage(source, sx, sy, sw, sh, -sw / 2, -sh / 2, sw, sh);
   ctx.restore();
 
-  // Vignette
   if (adj.vignette > 0) {
     const strength = adj.vignette / 100;
     const gradient = ctx.createRadialGradient(
@@ -170,7 +192,6 @@ export async function exportImage(
     ctx.fillRect(0, 0, outW, outH);
   }
 
-  // Film grain
   if (adj.grain > 0) {
     const strength = adj.grain / 100;
     const imageData = ctx.getImageData(0, 0, outW, outH);
@@ -184,7 +205,6 @@ export async function exportImage(
     ctx.putImageData(imageData, 0, 0);
   }
 
-  // Draw shapes then texts (on top)
   drawShapes(ctx, shapes, outW, outH);
   drawTexts(ctx, texts, outW, outH);
 
