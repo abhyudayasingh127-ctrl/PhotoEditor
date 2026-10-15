@@ -14,6 +14,13 @@ export interface Adjustments {
   sharpness: number;
   blur: number;       // 0-20
   grain: number;      // 0-100
+  // Phase 3 – Curves & HSL-ish
+  curveShadows: number;    // -100 to 100
+  curveMidtones: number;
+  curveHighlights: number;
+  hslHue: number;          // -180 to 180 (global hue shift)
+  hslSat: number;          // extra saturation control
+  hslLum: number;          // lightness
 }
 
 export interface CropState {
@@ -21,14 +28,14 @@ export interface CropState {
   y: number;
   width: number;
   height: number;
-  aspect: string; // 'free' | '1:1' | '4:3' | '3:2' | '16:9' | '9:16' | '3:4'
+  aspect: string;
 }
 
 export interface TextLayer {
   id: string;
   text: string;
-  x: number;          // percentage 0-100
-  y: number;          // percentage 0-100
+  x: number;
+  y: number;
   fontSize: number;
   fontFamily: string;
   color: string;
@@ -42,9 +49,9 @@ export interface TextLayer {
 export interface ShapeLayer {
   id: string;
   type: 'rect' | 'circle' | 'line' | 'arrow';
-  x: number;          // percentage
+  x: number;
   y: number;
-  width: number;      // percentage
+  width: number;
   height: number;
   color: string;
   strokeColor: string;
@@ -109,6 +116,12 @@ export const DEFAULT_ADJUSTMENTS: Adjustments = {
   sharpness: 0,
   blur: 0,
   grain: 0,
+  curveShadows: 0,
+  curveMidtones: 0,
+  curveHighlights: 0,
+  hslHue: 0,
+  hslSat: 0,
+  hslLum: 0,
 };
 
 export const ASPECT_RATIOS = [
