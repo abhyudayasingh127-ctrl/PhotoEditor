@@ -1,7 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { Upload, ImageIcon, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 import { buildCssFilter } from '../utils/imageProcessing';
-import { Adjustments } from '../types';
+import { Adjustments, TextLayer, ShapeLayer } from '../types';
 
 interface Props {
   imageSrc: string | null;
@@ -14,6 +14,8 @@ interface Props {
   showOriginal: boolean;
   onDrop: (file: File) => void;
   onUploadClick: () => void;
+  texts?: TextLayer[];
+  shapes?: ShapeLayer[];
 }
 
 const ZOOM_LEVELS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -29,6 +31,8 @@ export default function ImageWorkspace({
   showOriginal,
   onDrop,
   onUploadClick,
+  texts = [],
+  shapes = [],
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -46,16 +50,12 @@ export default function ImageWorkspace({
       e.preventDefault();
       e.stopPropagation();
       const file = e.dataTransfer.files?.[0];
-      if (file && file.type.startsWith('image/')) {
-        onDrop(file);
-      }
+      if (file && file.type.startsWith('image/')) onDrop(file);
     },
     [onDrop]
   );
 
-  const cssFilter = showOriginal
-    ? 'none'
-    : buildCssFilter(adjustments, filterId, filterIntensity);
+  const cssFilter = showOriginal ? 'none' : buildCssFilter(adjustments, filterId, filterIntensity);
 
   const transform = `
     scale(${zoom})
@@ -65,7 +65,6 @@ export default function ImageWorkspace({
     translate(${pan.x / zoom}px, ${pan.y / zoom}px)
   `;
 
-  // Mouse pan when zoomed
   const onMouseDown = (e: React.MouseEvent) => {
     if (zoom <= 1) return;
     setIsDragging(true);
@@ -109,7 +108,6 @@ export default function ImageWorkspace({
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {/* Canvas area */}
       <div className="flex-1 relative flex items-center justify-center overflow-hidden">
         {!imageSrc ? (
           <div className="flex flex-col items-center justify-center gap-4 text-center px-6">
@@ -117,19 +115,12 @@ export default function ImageWorkspace({
               <ImageIcon size={32} className="text-text-muted" />
             </div>
             <div>
-              <p className="text-[15px] font-medium text-text-primary mb-1">
-                Drop an image here to start editing
-              </p>
-              <p className="text-[13px] text-text-secondary">
-                JPEG, PNG, or WebP
-              </p>
+              <p className="text-[15px] font-medium text-text-primary mb-1">Drop an image here to start editing</p>
+              <p className="text-[13px] text-text-secondary">JPEG, PNG, or WebP</p>
             </div>
-            <button
-              onClick={onUploadClick}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-accent hover:bg-accent-hover text-white text-[13px] font-medium transition-colors"
-            >
-              <Upload size={16} />
-              Upload Image
+            <button onClick={onUploadClick}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-accent hover:bg-accent-hover text-white text-[13px] font-medium">
+              <Upload size={16} /> Upload Image
             </button>
           </div>
         ) : (
@@ -137,50 +128,88 @@ export default function ImageWorkspace({
             className={`relative max-w-full max-h-full ${isDragging ? 'cursor-grabbing' : zoom > 1 ? 'cursor-grab' : ''}`}
             onMouseDown={onMouseDown}
           >
-            <div className="checkerboard rounded-sm overflow-hidden shadow-2xl">
+            <div className="checkerboard rounded-sm overflow-hidden shadow-2xl relative"
+              style={{ transform, transformOrigin: 'center center', transition: isDragging ? 'none' : 'transform 0.15s ease' }}
+            >
               <img
                 src={imageSrc}
                 alt="Editing preview"
                 className="max-w-[min(90vw,900px)] max-h-[calc(100vh-160px)] object-contain block"
-                style={{
-                  filter: cssFilter,
-                  transform,
-                  transformOrigin: 'center center',
-                  transition: isDragging ? 'none' : 'transform 0.15s ease',
-                }}
+                style={{ filter: cssFilter }}
                 draggable={false}
               />
+
+              {/* Text & Shape overlays */}
+              {!showOriginal && (
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Shapes */}
+                  {shapes.map((s) => {
+                    const style: React.CSSProperties = {
+                      position: 'absolute',
+                      left: `${s.x}%`,
+                      top: `${s.y}%`,
+                      width: `${s.width}%`,
+                      height: `${s.height}%`,
+                      border: s.strokeWidth > 0 ? `${s.strokeWidth}px solid ${s.strokeColor}` : 'none',
+                      backgroundColor: s.filled ? s.color : 'transparent',
+                      boxSizing: 'border-box',
+                    };
+
+                    if (s.type === 'circle') {
+                      style.borderRadius = '50%';
+                    } else if (s.type === 'line' || s.type === 'arrow') {
+                      style.height = Math.max(s.strokeWidth, 2);
+                      style.backgroundColor = s.strokeColor || s.color;
+                      style.border = 'none';
+                      style.top = `calc(${s.y}% - ${s.strokeWidth / 2}px)`;
+                    }
+
+                    return <div key={s.id} style={style} />;
+                  })}
+
+                  {/* Texts */}
+                  {texts.map((t) => (
+                    <div
+                      key={t.id}
+                      style={{
+                        position: 'absolute',
+                        left: `${t.x}%`,
+                        top: `${t.y}%`,
+                        transform: 'translate(-50%, -50%)',
+                        fontSize: `${t.fontSize * 0.4}px`, // scale down for preview
+                        fontFamily: t.fontFamily,
+                        color: t.color,
+                        fontWeight: t.bold ? 700 : 400,
+                        fontStyle: t.italic ? 'italic' : 'normal',
+                        textAlign: t.align,
+                        WebkitTextStroke: t.strokeWidth > 0 ? `${t.strokeWidth * 0.3}px ${t.strokeColor}` : undefined,
+                        whiteSpace: 'pre-wrap',
+                        maxWidth: '80%',
+                        pointerEvents: 'none',
+                        userSelect: 'none',
+                      }}
+                    >
+                      {t.text}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
 
-      {/* Zoom controls */}
       {imageSrc && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-surface-800/90 backdrop-blur border border-surface-500 rounded-lg px-2 py-1.5 shadow-lg">
-          <button
-            onClick={zoomOut}
-            className="p-1.5 rounded text-text-secondary hover:text-text-primary hover:bg-surface-600"
-            title="Zoom out"
-          >
+          <button onClick={zoomOut} className="p-1.5 rounded text-text-secondary hover:text-text-primary hover:bg-surface-600" title="Zoom out">
             <ZoomOut size={16} />
           </button>
-          <span className="text-[12px] tabular-nums text-text-secondary w-12 text-center">
-            {Math.round(zoom * 100)}%
-          </span>
-          <button
-            onClick={zoomIn}
-            className="p-1.5 rounded text-text-secondary hover:text-text-primary hover:bg-surface-600"
-            title="Zoom in"
-          >
+          <span className="text-[12px] tabular-nums text-text-secondary w-12 text-center">{Math.round(zoom * 100)}%</span>
+          <button onClick={zoomIn} className="p-1.5 rounded text-text-secondary hover:text-text-primary hover:bg-surface-600" title="Zoom in">
             <ZoomIn size={16} />
           </button>
           <div className="w-px h-4 bg-surface-500 mx-1" />
-          <button
-            onClick={fit}
-            className="p-1.5 rounded text-text-secondary hover:text-text-primary hover:bg-surface-600"
-            title="Fit to screen"
-          >
+          <button onClick={fit} className="p-1.5 rounded text-text-secondary hover:text-text-primary hover:bg-surface-600" title="Fit to screen">
             <Maximize size={16} />
           </button>
         </div>
