@@ -9,6 +9,7 @@ import {
   DEFAULT_ADJUSTMENTS,
   ToolId,
   HistoryEntry,
+  CropState,
 } from './types';
 import { useHistory } from './hooks/useHistory';
 import { exportImage } from './utils/imageProcessing';
@@ -27,6 +28,12 @@ function App() {
   const [showOriginal, setShowOriginal] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+
+  // Resize state (separate from history for simplicity)
+  const [resizeWidth, setResizeWidth] = useState(0);
+  const [resizeHeight, setResizeHeight] = useState(0);
+  const [resizeLock, setResizeLock] = useState(true);
+  const aspectRef = useRef(1);
 
   const initialHistory: HistoryEntry = {
     adjustments: { ...DEFAULT_ADJUSTMENTS },
@@ -69,6 +76,9 @@ function App() {
       setOriginalSrc(url);
       setFilename(file.name);
       setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
+      setResizeWidth(img.naturalWidth);
+      setResizeHeight(img.naturalHeight);
+      aspectRef.current = img.naturalWidth / img.naturalHeight;
       imgRef.current = img;
 
       const reset: HistoryEntry = {
@@ -138,6 +148,77 @@ function App() {
     setIsDirty(true);
   };
 
+  // ---- Crop helpers ----
+  const handleCropAspectChange = (aspect: string) => {
+    if (!naturalSize.w) return;
+
+    let newCrop: CropState;
+
+    if (aspect === 'free') {
+      newCrop = {
+        x: 0,
+        y: 0,
+        width: naturalSize.w,
+        height: naturalSize.h,
+        aspect: 'free',
+      };
+    } else {
+      const [aw, ah] = aspect.split(':').map(Number);
+      const targetRatio = aw / ah;
+      let w = naturalSize.w;
+      let h = w / targetRatio;
+
+      if (h > naturalSize.h) {
+        h = naturalSize.h;
+        w = h * targetRatio;
+      }
+
+      const x = (naturalSize.w - w) / 2;
+      const y = (naturalSize.h - h) / 2;
+
+      newCrop = { x, y, width: w, height: h, aspect };
+    }
+
+    push({ ...present, crop: newCrop });
+    setIsDirty(true);
+  };
+
+  const handleApplyCrop = () => {
+    // Crop is already in history – just keep it
+    setIsDirty(true);
+  };
+
+  const handleClearCrop = () => {
+    push({ ...present, crop: null });
+    setIsDirty(true);
+  };
+
+  // ---- Resize helpers ----
+  const handleResizeWidthChange = (w: number) => {
+    setResizeWidth(w);
+    if (resizeLock && aspectRef.current) {
+      setResizeHeight(Math.round(w / aspectRef.current));
+    }
+  };
+
+  const handleResizeHeightChange = (h: number) => {
+    setResizeHeight(h);
+    if (resizeLock && aspectRef.current) {
+      setResizeWidth(Math.round(h * aspectRef.current));
+    }
+  };
+
+  const handleResizeLockToggle = () => {
+    setResizeLock((v) => !v);
+  };
+
+  const handleApplyResize = () => {
+    // For now we store the desired output size in naturalSize for export dialog
+    // A full pixel resize would require re-rendering the source – kept simple for Phase 1
+    setNaturalSize({ w: resizeWidth, h: resizeHeight });
+    setIsDirty(true);
+  };
+
   const handleToolChange = (tool: ToolId) => {
     setActiveTool(tool);
 
@@ -174,6 +255,20 @@ function App() {
     } else if (tool === 'adjust' || tool === 'color') {
       setActiveSection('edit');
       setRightTab('adjust');
+    } else if (tool === 'crop') {
+      // Initialize a free crop if none exists
+      if (!present.crop && naturalSize.w > 0) {
+        push({
+          ...present,
+          crop: {
+            x: 0,
+            y: 0,
+            width: naturalSize.w,
+            height: naturalSize.h,
+            aspect: 'free',
+          },
+        });
+      }
     }
   };
 
@@ -295,6 +390,20 @@ function App() {
           onFilterIntensityChange={handleFilterIntensity}
           onResetAll={handleResetAll}
           imageSrc={imageSrc}
+          activeTool={activeTool}
+          crop={crop}
+          naturalWidth={naturalSize.w}
+          naturalHeight={naturalSize.h}
+          onCropAspectChange={handleCropAspectChange}
+          onApplyCrop={handleApplyCrop}
+          onClearCrop={handleClearCrop}
+          resizeWidth={resizeWidth}
+          resizeHeight={resizeHeight}
+          resizeLock={resizeLock}
+          onResizeWidthChange={handleResizeWidthChange}
+          onResizeHeightChange={handleResizeHeightChange}
+          onResizeLockToggle={handleResizeLockToggle}
+          onApplyResize={handleApplyResize}
         />
       </div>
 
