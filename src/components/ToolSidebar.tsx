@@ -30,7 +30,7 @@ const TOOL_GROUPS = [
   {
     title: 'Basic',
     tools: [
-      { id: 'adjust' as ToolId, label: 'Adjust', icon: forSliders },
+      { id: 'adjust' as ToolId, label: 'Adjust', icon: SlidersHorizontal },
       { id: 'crop' as ToolId, label: 'Crop', icon: Crop },
       { id: 'rotate' as ToolId, label: 'Rotate', icon: RotateCw },
       { id: 'flipH' as ToolId, label: 'Flip H', icon: FlipHorizontal2 },
@@ -66,20 +66,15 @@ const TOOL_GROUPS = [
   },
 ];
 
-// Fix accidental rename
-function forSliders(props: any) {
-  return <SlidersHorizontal {...props} />;
-}
-
-const MOBILE_TOOLS: { id: ToolId; label: string; icon: any }[] = [
-  { id: 'adjust', label: 'Adjust', icon: SlidersHorizontal },
-  { id: 'crop', label: 'Crop', icon: Crop },
-  { id: 'filters', label: 'Filters', icon: Aperture },
-  { id: 'effects', label: 'Effects', icon: Sparkles },
-  { id: 'text', label: 'Text', icon: Type },
-  { id: 'shapes', label: 'Shapes', icon: Square },
-  { id: 'rotate', label: 'Rotate', icon: RotateCw },
-  { id: 'compare', label: 'Compare', icon: Columns2 },
+const MOBILE_TOOLS = [
+  { id: 'adjust' as ToolId, label: 'Adjust', icon: SlidersHorizontal },
+  { id: 'crop' as ToolId, label: 'Crop', icon: Crop },
+  { id: 'filters' as ToolId, label: 'Filters', icon: Aperture },
+  { id: 'effects' as ToolId, label: 'Effects', icon: Sparkles },
+  { id: 'text' as ToolId, label: 'Text', icon: Type },
+  { id: 'shapes' as ToolId, label: 'Shapes', icon: Square },
+  { id: 'rotate' as ToolId, label: 'Rotate', icon: RotateCw },
+  { id: 'compare' as ToolId, label: 'Compare', icon: Columns2 },
 ];
 
 export default function ToolSidebar({
@@ -110,7 +105,7 @@ export default function ToolSidebar({
               </div>
               <div className="space-y-0.5 px-1.5">
                 {group.tools.map((tool) => {
-                  const Icon = tool.icon === forSliders ? SlidersHorizontal : tool.icon;
+                  const Icon = tool.icon;
                   const isActive = activeTool === tool.id;
                   return (
                     <button
@@ -135,11 +130,11 @@ export default function ToolSidebar({
       </aside>
 
       {/* Mobile bottom toolbar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-800 border-t border-surface-500 safe-bottom">
-        <div className="flex items-center overflow-x-auto gap-1 px-2 py-2">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-800/95 backdrop-blur border-t border-surface-500 safe-bottom">
+        <div className="flex items-center overflow-x-auto gap-1 px-2 py-2 no-scrollbar">
           <button
             onClick={onUploadClick}
-            className="shrink-0 flex flex-col items-center justify-center w-14 h-12 rounded-md bg-accent text-white text-[10px] font-medium"
+            className="shrink-0 flex flex-col items-center justify-center w-14 min-h-[48px] rounded-md bg-accent text-white text-[10px] font-medium"
           >
             <Upload size={18} />
             <span className="mt-0.5">Upload</span>
@@ -153,10 +148,8 @@ export default function ToolSidebar({
                 key={tool.id}
                 onClick={() => onToolChange(tool.id)}
                 disabled={!hasImage && tool.id !== 'adjust'}
-                className={`shrink-0 flex flex-col items-center justify-center w-14 h-12 rounded-md text-[10px] ${
-                  isActive
-                    ? 'bg-accent/20 text-accent'
-                    : 'text-text-secondary'
+                className={`shrink-0 flex flex-col items-center justify-center w-14 min-h-[48px] rounded-md text-[10px] ${
+                  isActive ? 'bg-accent/20 text-accent' : 'text-text-secondary'
                 } disabled:opacity-40`}
               >
                 <Icon size={18} strokeWidth={1.75} />
