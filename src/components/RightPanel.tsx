@@ -1,8 +1,9 @@
-import { Adjustments, FILTERS, DEFAULT_ADJUSTMENTS } from '../types';
+import { Adjustments, FILTERS } from '../types';
 import SliderControl from './SliderControl';
 
 interface Props {
   activeTab: string;
+  onTabChange: (tab: string) => void;
   adjustments: Adjustments;
   filterId: string;
   filterIntensity: number;
@@ -16,6 +17,7 @@ interface Props {
 
 export default function RightPanel({
   activeTab,
+  onTabChange,
   adjustments,
   filterId,
   filterIntensity,
@@ -33,6 +35,7 @@ export default function RightPanel({
         {['adjust', 'filters', 'effects'].map((tab) => (
           <button
             key={tab}
+            onClick={() => onTabChange(tab)}
             className={`flex-1 py-3 text-[13px] font-medium capitalize transition-colors relative ${
               activeTab === tab
                 ? 'text-accent'
@@ -167,9 +170,7 @@ export default function RightPanel({
                 >
                   <div
                     className="aspect-square bg-surface-600 flex items-center justify-center relative overflow-hidden"
-                    style={{
-                      filter: f.css || 'none',
-                    }}
+                    style={{ filter: f.css || 'none' }}
                   >
                     {imageSrc ? (
                       <img
@@ -221,8 +222,8 @@ export default function RightPanel({
               onChange={() => {}}
               description="Coming in next update"
             />
-            <p className="text-[12px] text-text-muted mt-4">
-              Core adjustments & filters are fully functional. Advanced pixel effects (true blur, grain, etc.) will be added next.
+            <p className="text-[12px] text-text-muted mt-4 leading-relaxed">
+              Core adjustments & filters are fully functional. Advanced pixel effects (true Gaussian blur, film grain, etc.) will be added in the next update.
             </p>
           </div>
         )}
