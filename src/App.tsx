@@ -50,7 +50,7 @@ function App() {
     redo,
   } = useHistory(initialHistory);
 
-  const { adjustments, filterId, filterIntensity, rotation, flipH, flipV } = present;
+  const { adjustments, filterId, filterIntensity, rotation, flipH, flipV, crop } = present;
 
   // Load image
   const loadFile = useCallback((file: File) => {
@@ -168,7 +168,7 @@ function App() {
     } else if (tool === 'filters') {
       setActiveSection('filters');
       setRightTab('filters');
-    } else if (tool === 'effects') {
+    } else if (tool === 'effects' || tool === 'blur') {
       setActiveSection('effects');
       setRightTab('effects');
     } else if (tool === 'adjust' || tool === 'color') {
@@ -204,7 +204,8 @@ function App() {
         present.flipH,
         present.flipV,
         mime,
-        quality
+        quality,
+        present.crop
       );
 
       const url = URL.createObjectURL(blob);
