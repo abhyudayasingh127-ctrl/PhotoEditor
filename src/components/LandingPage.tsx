@@ -1,7 +1,6 @@
 import {
   Sparkles,
   Shield,
-  Zap,
   Image as ImageIcon,
   Type,
   Crop,
@@ -73,10 +72,6 @@ export default function LandingPage({ onLaunch }: Props) {
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(52,120,246,0.15),_transparent_55%)]" />
         <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-16 text-center sm:px-6 sm:pb-24 sm:pt-24">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[12px] text-accent">
-            <Zap size={14} />
-            Fully client-side · No uploads · Free
-          </div>
           <h1 className="mx-auto max-w-3xl text-3xl font-bold tracking-tight sm:text-5xl sm:leading-[1.15]">
             Professional photo editing,{' '}
             <span className="text-accent">right in your browser</span>
