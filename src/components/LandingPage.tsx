@@ -1,11 +1,5 @@
 import {
-  Sparkles,
-  Shield,
   Image as ImageIcon,
-  Type,
-  Crop,
-  Palette,
-  Smartphone,
   Github,
   ArrowRight,
 } from 'lucide-react';
@@ -16,32 +10,26 @@ interface Props {
 
 const FEATURES = [
   {
-    icon: Palette,
     title: 'Pro Adjustments',
     desc: 'Brightness, contrast, curves, HSL, temperature, vignette and more — all live.',
   },
   {
-    icon: Sparkles,
     title: 'Filters & Effects',
     desc: '18 cinematic presets plus blur and film grain, applied instantly in your browser.',
   },
   {
-    icon: Crop,
     title: 'Crop & Resize',
     desc: 'Aspect ratio presets and precise resize with optional lock — export ready.',
   },
   {
-    icon: Type,
     title: 'Text & Shapes',
     desc: 'Add text layers and shapes with full style control. Baked into every export.',
   },
   {
-    icon: Shield,
     title: '100% Private',
     desc: 'Everything runs on your device. Your photos never leave your computer.',
   },
   {
-    icon: Smartphone,
     title: 'Mobile Ready',
     desc: 'Responsive layout with a bottom toolbar so editing works great on phones too.',
   },
@@ -70,7 +58,7 @@ export default function LandingPage({ onLaunch }: Props) {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(52,120,246,0.15),_transparent_55%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(52,120,246,0.12),_transparent_55%)]" />
         <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-16 text-center sm:px-6 sm:pb-24 sm:pt-24">
           <h1 className="mx-auto max-w-3xl text-3xl font-bold tracking-tight sm:text-5xl sm:leading-[1.15]">
             Professional photo editing,{' '}
@@ -83,7 +71,7 @@ export default function LandingPage({ onLaunch }: Props) {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <button
               onClick={onLaunch}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-[14px] font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accent-hover"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-[14px] font-semibold text-white transition hover:bg-accent-hover"
             >
               Start Editing
               <ArrowRight size={18} />
@@ -101,116 +89,88 @@ export default function LandingPage({ onLaunch }: Props) {
         </div>
       </section>
 
-      {/* Features */}
-      <section className="border-t border-surface-500/60 bg-surface-800/40">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
-          <div className="mb-10 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Everything you need</h2>
-            <p className="mt-2 text-[14px] text-text-secondary">
-              A focused toolkit for everyday edits and creative work.
-            </p>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((f) => {
-              const Icon = f.icon;
-              return (
-                <div
-                  key={f.title}
-                  className="rounded-xl border border-surface-500 bg-surface-800/80 p-5 transition hover:border-accent/40"
-                >
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/15 text-accent">
-                    <Icon size={20} strokeWidth={1.75} />
-                  </div>
-                  <h3 className="text-[15px] font-semibold">{f.title}</h3>
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-text-secondary">{f.desc}</p>
-                </div>
-              );
-            })}
-          </div>
+      {/* Features — simple list, no cards */}
+      <section className="border-t border-surface-500/60">
+        <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
+          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">What it does</h2>
+          <p className="mt-2 max-w-lg text-[14px] text-text-secondary">
+            The tools you actually use when editing a photo — nothing extra.
+          </p>
+
+          <ul className="mt-10 divide-y divide-surface-500/70">
+            {FEATURES.map((f) => (
+              <li key={f.title} className="flex flex-col gap-1 py-5 sm:flex-row sm:items-baseline sm:gap-8">
+                <span className="w-40 shrink-0 text-[14px] font-medium text-text-primary">{f.title}</span>
+                <span className="text-[14px] leading-relaxed text-text-secondary">{f.desc}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
       {/* How it works */}
-      <section className="border-t border-surface-500/60">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
-          <div className="mb-10 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">How it works</h2>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-3">
+      <section className="border-t border-surface-500/60 bg-surface-800/30">
+        <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
+          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">How it works</h2>
+          <ol className="mt-8 space-y-6">
             {[
-              { step: '1', title: 'Upload', desc: 'Drop a JPEG, PNG or WebP — or pick from your device.' },
-              { step: '2', title: 'Edit', desc: 'Use adjustments, filters, crop, text and shapes in real time.' },
-              { step: '3', title: 'Export', desc: 'Download your image. Nothing is stored on any server.' },
+              { step: '01', title: 'Open an image', desc: 'Drop a JPEG, PNG or WebP, or pick one from your device.' },
+              { step: '02', title: 'Edit', desc: 'Adjustments, filters, crop, text and shapes — all in real time.' },
+              { step: '03', title: 'Export', desc: 'Download the result. Nothing is uploaded or stored on a server.' },
             ].map((s) => (
-              <div key={s.step} className="text-center">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-accent/40 bg-accent/10 text-lg font-bold text-accent">
-                  {s.step}
+              <li key={s.step} className="flex gap-4 sm:gap-6">
+                <span className="w-8 shrink-0 text-[13px] font-medium tabular-nums text-accent">{s.step}</span>
+                <div>
+                  <div className="text-[15px] font-medium">{s.title}</div>
+                  <p className="mt-0.5 text-[14px] text-text-secondary">{s.desc}</p>
                 </div>
-                <h3 className="text-[15px] font-semibold">{s.title}</h3>
-                <p className="mt-1 text-[13px] text-text-secondary">{s.desc}</p>
-              </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 
       {/* Creators */}
-      <section className="border-t border-surface-500/60 bg-surface-800/40">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
-          <div className="mb-10 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Created by</h2>
-            <p className="mt-2 text-[14px] text-text-secondary">
-              Built together for a fast, private photo editor anyone can use.
-            </p>
-          </div>
-          <div className="mx-auto grid max-w-2xl gap-4 sm:grid-cols-2">
+      <section className="border-t border-surface-500/60">
+        <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
+          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Created by</h2>
+          <p className="mt-2 text-[14px] text-text-secondary">
+            Built by two people who wanted a simple, private editor in the browser.
+          </p>
+
+          <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:gap-12">
             <a
               href="https://github.com/DrPhrma"
               target="_blank"
               rel="noreferrer"
-              className="group flex items-center gap-4 rounded-xl border border-surface-500 bg-surface-800 p-5 transition hover:border-accent/50"
+              className="group flex items-center gap-3 text-left"
             >
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent/20 text-lg font-bold text-accent">
-                DP
-              </div>
-              <div className="min-w-0 text-left">
-                <div className="text-[15px] font-semibold group-hover:text-accent">DrPhrma</div>
-                <div className="text-[13px] text-text-secondary">@DrPhrma · GitHub</div>
-              </div>
-              <Github size={18} className="ml-auto shrink-0 text-text-muted group-hover:text-accent" />
+              <span className="text-[15px] font-medium group-hover:text-accent">DrPhrma</span>
+              <span className="text-[13px] text-text-muted">GitHub ↗</span>
             </a>
             <a
               href="https://github.com/abhyudayasingh127-ctrl"
               target="_blank"
               rel="noreferrer"
-              className="group flex items-center gap-4 rounded-xl border border-surface-500 bg-surface-800 p-5 transition hover:border-accent/50"
+              className="group flex items-center gap-3 text-left"
             >
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent/20 text-lg font-bold text-accent">
-                AS
-              </div>
-              <div className="min-w-0 text-left">
-                <div className="text-[15px] font-semibold group-hover:text-accent">abhyudayasingh127-ctrl</div>
-                <div className="text-[13px] text-text-secondary">@abhyudayasingh127-ctrl · GitHub</div>
-              </div>
-              <Github size={18} className="ml-auto shrink-0 text-text-muted group-hover:text-accent" />
+              <span className="text-[15px] font-medium group-hover:text-accent">abhyudayasingh127-ctrl</span>
+              <span className="text-[13px] text-text-muted">GitHub ↗</span>
             </a>
           </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="border-t border-surface-500/60">
-        <div className="mx-auto max-w-6xl px-4 py-14 text-center sm:px-6 sm:py-20">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/15 text-accent">
-            <ImageIcon size={28} />
-          </div>
+      <section className="border-t border-surface-500/60 bg-surface-800/30">
+        <div className="mx-auto max-w-3xl px-4 py-14 text-center sm:px-6 sm:py-20">
           <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Ready to edit?</h2>
           <p className="mx-auto mt-2 max-w-md text-[14px] text-text-secondary">
-            No account. No upload. Just open the editor and drop an image.
+            Open the editor and drop an image. No account needed.
           </p>
           <button
             onClick={onLaunch}
-            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-[14px] font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accent-hover"
+            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-[14px] font-semibold text-white transition hover:bg-accent-hover"
           >
             Launch PhotoEdit Studio
             <ArrowRight size={18} />
